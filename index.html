@@ -48,6 +48,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
     <div class="neu"><input id="neuAufgabe" placeholder="Was ist zu tun?"><button id="neuLos">+</button></div>
     <div class="chips" id="neuBis"><div class="chip" data-t="0">heute</div><div class="chip" data-t="1">morgen</div><div class="chip" data-t="7">in 1 Woche</div><div class="chip" data-t="">kein Datum</div></div>
     <div class="leer" style="padding:6px 0 0;text-align:left">Steht in 15 Minuten auch in der Excel (Reiter Aufgaben).</div></div>
+  <div class="karte versteckt" id="termineKarte"><h2>Termine in den nächsten 30 Tagen</h2><div id="termine"></div></div>
   <div class="karte"><h2>Offene Aufgaben</h2><div id="aufgaben"></div></div>
 </section>
 </main>
@@ -92,7 +93,13 @@ function zeichneAutos(){
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
 
 /* ---------- Aufgaben ---------- */
-function zeichneAufgaben(){const h=heute();
+// TÜV, Service, Reifen: 30 Tage vorher als Termin, von selbst (aus dem Reiter Autos der Excel)
+function termineListe(){const st=lies("mietixAutos",{}),l=[];
+  Object.keys(st).forEach(n=>[["tuev","TÜV"],["service","Service"],["reifen","Reifen"]].forEach(([k,t])=>{const d=st[n][k];if(!d)return;const tage=tageBis(d);if(tage<=30)l.push({auto:n,was:t,datum:d,tage})}));
+  return l.sort((a,b)=>a.tage-b.tage)}
+function zeichneTermine(){const l=termineListe();$("termineKarte").classList.toggle("versteckt",!l.length);
+  $("termine").innerHTML=l.map(x=>'<div class="punkt'+(x.tage<=7?" heute":"")+'" style="cursor:default"><span><span class="t">'+x.was+" "+x.auto+'</span><i>'+(x.tage<0?"überfällig seit "+de(x.datum):x.tage===0?"heute":"in "+x.tage+" Tagen, "+de(x.datum))+'</i></span></div>').join("")}
+function zeichneAufgaben(){const h=heute();zeichneTermine();
   const l=lies("mietixAufgaben",[]).filter(a=>!a.erledigt&&!a._weg&&a.aufgabe).sort((x,y)=>(x.bis||"9")+(x.seit||"")<(y.bis||"9")+(y.seit||"")?-1:1);
   $("aufgaben").innerHTML=l.length?l.map(a=>{const t=tageBis(a.bis);const wann=a.bis?(t<0?"überfällig seit "+de(a.bis):t===0?"heute":t===1?"morgen":"bis "+de(a.bis)):"";
     return'<div class="punkt'+(t!==null&&t<=0?" heute":"")+'" data-a="'+a.id+'"><span class="box"></span><span><span class="t">'+a.aufgabe+'</span><i>'+[wann,a.status&&a.status!=="Offen"?a.status:"",a.betrag?a.betrag.toLocaleString("de-DE")+" €":"",a.tun].filter(Boolean).join("  |  ")+'</i></span></div>'}).join(""):'<div class="leer">Nichts offen. Die Aufgaben aus der Excel kommen mit der Brücke hierher.</div>';
@@ -126,7 +133,7 @@ const KEY="sb_publishable_LVkvpgXMpBbq_OXgwOfTqg_ZRcRkFyQ";   // öffentlich ged
 const SPEICHER={mietixVorgaenge:{tab:"vorgaenge",pk:"nr",liste:true},mietixAnfragen:{tab:"anfragen",pk:"id",liste:true},
   mietixKunden:{tab:"kunden",pk:"name",liste:false},mietixFahrzeuge:{tab:"fahrzeuge",pk:"name",liste:false},
   mietixAusgaben:{tab:"ausgaben",pk:"id",liste:true},mietixSperren:{tab:"sperren",pk:"id",liste:true},
-  mietixAufgaben:{tab:"aufgaben",pk:"id",liste:true},mietixZustand:{tab:"zustand",pk:"id",liste:true},mietixAutos:{tab:"autos",pk:"name",liste:false}};
+  mietixAufgaben:{tab:"aufgaben",pk:"id",liste:true},mietixZustand:{tab:"zustand",pk:"id",liste:true},mietixAutos:{tab:"autos",pk:"name",liste:false},mietixStand:{tab:"stand",pk:"id",liste:false}};
 const roh=Storage.prototype.setItem;
 const lies=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"")||d}catch(e){return d}};
 const merk=(k,v)=>{try{roh.call(localStorage,k,JSON.stringify(v))}catch(e){}};
