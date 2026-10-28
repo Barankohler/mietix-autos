@@ -42,7 +42,11 @@ main{max-width:680px;margin:0 auto;padding:16px}
   <div class="reiter"><div data-s="autos" class="an">Autos</div><div data-s="aufgaben">Aufgaben</div></div></header>
 <main>
 <div id="abgleich"></div>
-<section id="s_autos"><div id="autos"></div></section>
+<section id="s_autos">
+  <div class="karte"><h2>Wer fuhr wann? (Bußgeld, Blitzer, Parkverstoß)</h2>
+    <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1"><select id="wfAuto" style="flex:1.4;border:1px solid var(--rand);border-radius:12px;padding:11px;font:600 15px inherit;background:#fff"></select></div>
+    <div id="wfErgebnis" class="leer" style="text-align:left">Datum und Auto wählen.</div></div>
+  <div id="autos"></div></section>
 <section id="s_aufgaben" class="versteckt">
   <div class="karte"><h2>Neue Aufgabe</h2>
     <div class="neu"><input id="neuAufgabe" placeholder="Was ist zu tun?"><button id="neuLos">+</button></div>
@@ -92,6 +96,18 @@ function zeichneAutos(){
     const l=lies("mietixZustand",[]);l.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),auto:b.dataset.neuz,text:t,erledigt:false,datum:heute()});schreib("mietixZustand",l);zeichneAutos()});
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
 
+/* ---------- Wer fuhr wann: Mieter zum Datum, Angaben für die Fahrerbenennung kopieren ---------- */
+function wfFuellen(){const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):Object.keys(lies("mietixAutos",{}));const alt=$("wfAuto").value;
+  $("wfAuto").innerHTML='<option value="">Auto</option>'+namen.map(n=>'<option>'+n+'</option>').join("");if(alt)$("wfAuto").value=alt}
+function wfSuchen(){const d=$("wfDatum").value,a=$("wfAuto").value;if(!d||!a){$("wfErgebnis").textContent="Datum und Auto wählen.";return}
+  const t=lies("mietixVorgaenge",[]).filter(v=>v.auto===a&&v.vonD&&v.bisD&&v.vonD<=d&&v.bisD>=d);
+  if(!t.length){$("wfErgebnis").innerHTML="Kein Vertrag für "+a+" am "+de(d)+". Dann war das Auto bei euch oder in der Werkstatt.";return}
+  $("wfErgebnis").innerHTML=t.map(v=>{const text="Fahrer am "+de(d)+", "+a+(v.kz?" ("+v.kz+")":"")+":\n"+v.name+"\n"+(v.anschrift||"")+"\ngeboren am "+de(v.geb)+(v.gebort?" in "+v.gebort:"")+"\nTelefon "+(v.telefon||"")+(v.email?"\nE-Mail "+v.email:"")+"\nMietvertrag Nr. "+v.nr+", "+de(v.vonD)+" bis "+de(v.bisD);
+    return'<div style="margin-top:6px"><b>'+v.name+'</b><br><span class="grau" style="font-size:13px">'+(v.anschrift||"")+'<br>geb. '+de(v.geb)+(v.gebort?" in "+v.gebort:"")+', Tel. '+(v.telefon||"")+'<br>Vertrag '+v.nr+', '+de(v.vonD)+' bis '+de(v.bisD)+'</span>'+
+      '<div class="chips"><div class="chip wfKopie" data-t="'+encodeURIComponent(text)+'">Angaben kopieren (für die Fahrerbenennung)</div>'+(v.telefon?'<a class="chip" style="text-decoration:none;color:inherit" target="_blank" href="https://wa.me/'+String(v.telefon).replace(/\D/g,"").replace(/^0/,"49")+'">WhatsApp</a>':'')+'</div></div>'}).join("");
+  [...$("wfErgebnis").querySelectorAll(".wfKopie")].forEach(c=>c.onclick=()=>{try{navigator.clipboard.writeText(decodeURIComponent(c.dataset.t))}catch(e){}meldung("Kopiert. In das Formular der Behörde einfügen.")})}
+$("wfDatum").addEventListener("change",wfSuchen);$("wfAuto").addEventListener("change",wfSuchen);
+
 /* ---------- Aufgaben ---------- */
 // TÜV, Service, Reifen: 30 Tage vorher als Termin, von selbst (aus dem Reiter Autos der Excel)
 function termineListe(){const st=lies("mietixAutos",{}),l=[];
@@ -116,7 +132,8 @@ function zeige(s){SICHT=s;$("s_autos").classList.toggle("versteckt",s!=="autos")
 [...document.querySelectorAll(".reiter div")].forEach(c=>c.onclick=()=>zeige(c.dataset.s));
 if(new URLSearchParams(location.search).get("zeige")==="aufgaben")zeige("aufgaben");
 zeichneAutos();zeichneAufgaben();
-fetch("https://barankohler.github.io/mietix-preise/preise.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p&&p.cars){D=p;zeichneAutos()}}).catch(()=>{});
+wfFuellen();
+fetch("https://barankohler.github.io/mietix-preise/preise.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p&&p.cars){D=p;zeichneAutos();wfFuellen()}}).catch(()=>{});
 window.addEventListener("mietix-abgleich",()=>{zeichneAutos();zeichneAufgaben()});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){zeichneAutos();zeichneAufgaben()}});
 </script>
