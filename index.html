@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="de"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Autos">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Mietix Autos</title>
+<style>
+:root{--rot:#C4161C;--text:#2E2E30;--rand:#E4E4E7;--grau:#6F6F72;--bg:#F6F6F7;--gruen:#1B8A4B;--hell:#FDECEC;--gelb:#FFF4D6}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);padding-bottom:40px;-webkit-text-size-adjust:100%}
+header{background:#fff;border-bottom:3px solid var(--rot);padding:calc(12px + env(safe-area-inset-top)) 18px 12px;position:sticky;top:0;z-index:5}
+header h1{font-size:16px;letter-spacing:1px;font-weight:800}header h1 span{color:var(--rot)}
+.reiter{display:flex;gap:8px;margin-top:10px}
+.reiter div{flex:1;text-align:center;padding:10px;border-radius:12px;background:var(--bg);font-weight:800;font-size:14px;color:var(--grau);cursor:pointer}
+.reiter div.an{background:var(--rot);color:#fff}
+main{max-width:680px;margin:0 auto;padding:16px}
+.karte{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;border:1px solid var(--rand)}
+.karte h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--rot);margin-bottom:8px}
+.auto h3{font-size:18px;font-weight:900}
+.auto .kz{font-size:13px;color:var(--grau);font-weight:700;margin-bottom:8px}
+.zeile{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--rand);font-size:14px}
+.zeile:last-child{border-bottom:0}.zeile b{font-weight:800}
+.rot{color:var(--rot)}.gruen{color:var(--gruen)}.grau{color:var(--grau)}
+.punkt{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rand);cursor:pointer}
+.punkt:last-child{border-bottom:0}
+.punkt .box{width:24px;height:24px;border:2px solid var(--rand);border-radius:7px;flex:0 0 24px}
+.punkt .t{font-size:15px;font-weight:700}.punkt i{display:block;font-style:normal;font-size:12px;color:var(--grau);font-weight:600}
+.punkt.heute .t{color:var(--rot)}
+.neu{display:flex;gap:8px;margin-top:10px}
+.neu input{flex:1;border:1px solid var(--rand);border-radius:12px;padding:11px 12px;font:600 15px inherit;min-height:46px}
+.neu button{background:var(--rot);color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 16px inherit;cursor:pointer}
+.leer{color:var(--grau);text-align:center;padding:12px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:8px 11px;border-radius:999px;border:1px solid var(--rand);background:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.chip.an{background:var(--rot);border-color:var(--rot);color:#fff}
+.versteckt{display:none!important}
+.meldung{position:fixed;left:16px;right:16px;bottom:24px;background:var(--gruen);color:#fff;border-radius:14px;padding:14px;font-weight:800;text-align:center;z-index:9;display:none}
+</style></head><body>
+<header><h1>MIETIX <span>AUTOS</span> <i id="abgleichPunkt" title="Abgleich aller Geräte" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#B0B0B3;vertical-align:middle;margin-left:4px"></i></h1>
+  <div class="reiter"><div data-s="autos" class="an">Autos</div><div data-s="aufgaben">Aufgaben</div></div></header>
+<main>
+<div id="abgleich"></div>
+<section id="s_autos"><div id="autos"></div></section>
+<section id="s_aufgaben" class="versteckt">
+  <div class="karte"><h2>Neue Aufgabe</h2>
+    <div class="neu"><input id="neuAufgabe" placeholder="Was ist zu tun?"><button id="neuLos">+</button></div>
+    <div class="chips" id="neuBis"><div class="chip" data-t="0">heute</div><div class="chip" data-t="1">morgen</div><div class="chip" data-t="7">in 1 Woche</div><div class="chip" data-t="">kein Datum</div></div>
+    <div class="leer" style="padding:6px 0 0;text-align:left">Steht in 15 Minuten auch in der Excel (Reiter Aufgaben).</div></div>
+  <div class="karte"><h2>Offene Aufgaben</h2><div id="aufgaben"></div></div>
+</section>
+</main>
+<div class="meldung" id="meldung"></div>
+<script>
+const $=id=>document.getElementById(id);
+const lies=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"")||d}catch(e){return d}};
+const schreib=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const de=s=>s?String(s).slice(0,10).split("-").reverse().join("."):"";
+const zahl=v=>{if(v===null||v===undefined)return null;const s=String(v).trim();if(!s)return null;const n=parseFloat(s.indexOf(",")>=0?s.replace(/\./g,"").replace(",","."):s.replace(/\.(?=\d{3}(\D|$))/g,""));return isNaN(n)?null:n};
+const km=n=>n?Math.round(n).toLocaleString("de-DE")+" km":"";
+function meldung(t){const m=$("meldung");m.textContent=t;m.style.display="block";setTimeout(()=>m.style.display="none",2200)}
+let D=null,SICHT="autos",NEU_BIS=null;
+const heute=()=>iso(new Date());
+const tageBis=s=>s?Math.round((new Date(s+"T12:00")-new Date(heute()+"T12:00"))/86400000):null;
+
+/* ---------- Autos ---------- */
+function termin(name,datum){const t=tageBis(datum);if(t===null)return'<div class="zeile"><span>'+name+'</span><span class="grau">kein Datum</span></div>';
+  const k=t<0?"rot":t<=30?"rot":"";return'<div class="zeile"><span>'+name+'</span><b class="'+k+'">'+de(datum)+(t<0?" (überfällig)":t<=30?" (in "+t+" Tagen)":"")+'</b></div>'}
+function zeichneAutos(){
+  const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):[],stamm=lies("mietixAutos",{}),vorg=lies("mietixVorgaenge",[]),zust=lies("mietixZustand",[]),h=heute();
+  Object.keys(stamm).forEach(n=>{if(namen.indexOf(n)<0)namen.push(n)});
+  $("autos").innerHTML=namen.map(n=>{const a=stamm[n]||{};
+    const kms=vorg.filter(v=>v.auto===n).map(v=>zahl((v.rueck||{}).km)||zahl((v.ueb||{}).km)||zahl(v.km)||0);
+    const kmStand=Math.max(zahl(a.km)||0,...kms);
+    const jetzt=vorg.find(v=>v.auto===n&&v.status!=="zurück"&&v.vonD<=h&&v.bisD>=h);
+    const naechste=vorg.filter(v=>v.auto===n&&v.status!=="zurück"&&v.vonD>h).sort((x,y)=>x.vonD.localeCompare(y.vonD))[0];
+    const punkte=zust.filter(z=>z.auto===n&&!z.erledigt);
+    return'<div class="karte auto" data-auto="'+n+'"><h3>'+n+'</h3><div class="kz">'+(a.kz||"")+(a.fin?"  |  FIN "+a.fin:"")+'</div>'+
+      '<div class="zeile"><span>Kilometerstand</span><b>'+(kmStand?km(kmStand):"<span class=grau>unbekannt</span>")+'</b></div>'+
+      '<div class="zeile"><span>Gerade</span><b>'+(jetzt?'<span class="rot">unterwegs: '+jetzt.name+' bis '+de(jetzt.bisD)+'</span>':'<span class="gruen">frei</span>')+'</b></div>'+
+      '<div class="zeile"><span>Nächste Miete</span><b>'+(naechste?naechste.name+", "+de(naechste.vonD):'<span class="grau">keine</span>')+'</b></div>'+
+      termin("TÜV",a.tuev)+termin("Service",a.service)+termin("Reifen",a.reifen)+
+      (a.notiz?'<div class="zeile"><span class="grau" style="font-size:12px">'+a.notiz+'</span></div>':'')+
+      '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
+      '<div class="neu"><input placeholder="Neuer Punkt, z. B. Kratzer Felge vorne links" data-neu="'+n+'"><button data-neuz="'+n+'">+</button></div></div>'}).join("")||'<div class="leer">Preisdatei wird geladen …</div>';
+  [...$("autos").querySelectorAll(".punkt[data-z]")].forEach(e=>e.onclick=()=>{const l=lies("mietixZustand",[]),z=l.find(x=>x.id===e.dataset.z);if(z){z.erledigt=true;z.erledigtAm=heute();schreib("mietixZustand",l);meldung("Erledigt");zeichneAutos()}});
+  [...$("autos").querySelectorAll("button[data-neuz]")].forEach(b=>b.onclick=()=>{const inp=$("autos").querySelector('input[data-neu="'+b.dataset.neuz+'"]'),t=inp.value.trim();if(!t)return;
+    const l=lies("mietixZustand",[]);l.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),auto:b.dataset.neuz,text:t,erledigt:false,datum:heute()});schreib("mietixZustand",l);zeichneAutos()});
+  [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
+
+/* ---------- Aufgaben ---------- */
+function zeichneAufgaben(){const h=heute();
+  const l=lies("mietixAufgaben",[]).filter(a=>!a.erledigt&&!a._weg&&a.aufgabe).sort((x,y)=>(x.bis||"9")+(x.seit||"")<(y.bis||"9")+(y.seit||"")?-1:1);
+  $("aufgaben").innerHTML=l.length?l.map(a=>{const t=tageBis(a.bis);const wann=a.bis?(t<0?"überfällig seit "+de(a.bis):t===0?"heute":t===1?"morgen":"bis "+de(a.bis)):"";
+    return'<div class="punkt'+(t!==null&&t<=0?" heute":"")+'" data-a="'+a.id+'"><span class="box"></span><span><span class="t">'+a.aufgabe+'</span><i>'+[wann,a.status&&a.status!=="Offen"?a.status:"",a.betrag?a.betrag.toLocaleString("de-DE")+" €":"",a.tun].filter(Boolean).join("  |  ")+'</i></span></div>'}).join(""):'<div class="leer">Nichts offen. Die Aufgaben aus der Excel kommen mit der Brücke hierher.</div>';
+  [...$("aufgaben").querySelectorAll(".punkt[data-a]")].forEach(e=>e.onclick=()=>{if(!confirm("Erledigt?"))return;const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===e.dataset.a);if(a){a.erledigt=heute();schreib("mietixAufgaben",l);meldung("Erledigt, steht gleich in der Excel");zeichneAufgaben()}})}
+[...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t});
+$("neuLos").onclick=()=>{const t=$("neuAufgabe").value.trim();if(!t)return;const d=new Date();if(NEU_BIS!==null)d.setDate(d.getDate()+NEU_BIS);
+  const l=lies("mietixAufgaben",[]);l.push({id:"h"+String(Date.now())+Math.random().toString(36).slice(2,6),aufgabe:t,status:"Offen",bis:NEU_BIS===null?"":iso(d),seit:heute(),quelle:"handy"});
+  schreib("mietixAufgaben",l);$("neuAufgabe").value="";meldung("Aufgabe angelegt");zeichneAufgaben()};
+$("neuAufgabe").addEventListener("keydown",e=>{if(e.key==="Enter")$("neuLos").click()});
+
+/* ---------- Reiter, Start ---------- */
+function zeige(s){SICHT=s;$("s_autos").classList.toggle("versteckt",s!=="autos");$("s_aufgaben").classList.toggle("versteckt",s!=="aufgaben");
+  [...document.querySelectorAll(".reiter div")].forEach(c=>c.classList.toggle("an",c.dataset.s===s));if(s==="autos")zeichneAutos();else zeichneAufgaben()}
+[...document.querySelectorAll(".reiter div")].forEach(c=>c.onclick=()=>zeige(c.dataset.s));
+if(new URLSearchParams(location.search).get("zeige")==="aufgaben")zeige("aufgaben");
+zeichneAutos();zeichneAufgaben();
+fetch("https://barankohler.github.io/mietix-preise/preise.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p&&p.cars){D=p;zeichneAutos()}}).catch(()=>{});
+window.addEventListener("mietix-abgleich",()=>{zeichneAutos();zeichneAufgaben()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){zeichneAutos();zeichneAufgaben()}});
+</script>
+<script>/* Mietix Abgleich: Verträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
+   Wird von tools/vertrag/build_html.py und tools/anfragen/build_html.py in die Seite eingebaut.
+   - Die Werkzeuge arbeiten weiter nur mit localStorage. Dieser Baustein merkt jede Änderung an den vier Speichern,
+     schickt sie hoch und holt neue Stände der anderen Geräte (beim Start, beim Zurückkehren zur Seite, jede Minute).
+   - Ohne Internet oder ohne Anmeldung läuft alles wie vorher, der Abgleich holt später nach.
+   - Gelöschte Einträge (Anfragen-Buch) gehen als {_weg:true} hoch, damit sie auch auf den anderen Geräten verschwinden.
+   - Anmeldung: E-Mail und Passwort, einmal pro Gerät. Gilt für alle Mietix-Werkzeuge auf barankohler.github.io. */
+(function(){
+const URL_="https://zbeqrwvlmiulxvhryiku.supabase.co";
+const KEY="sb_publishable_LVkvpgXMpBbq_OXgwOfTqg_ZRcRkFyQ";   // öffentlich gedacht, Schutz über Anmeldung und Regeln in der Datenbank
+const SPEICHER={mietixVorgaenge:{tab:"vorgaenge",pk:"nr",liste:true},mietixAnfragen:{tab:"anfragen",pk:"id",liste:true},
+  mietixKunden:{tab:"kunden",pk:"name",liste:false},mietixFahrzeuge:{tab:"fahrzeuge",pk:"name",liste:false},
+  mietixAusgaben:{tab:"ausgaben",pk:"id",liste:true},mietixSperren:{tab:"sperren",pk:"id",liste:true},
+  mietixAufgaben:{tab:"aufgaben",pk:"id",liste:true},mietixZustand:{tab:"zustand",pk:"id",liste:true},mietixAutos:{tab:"autos",pk:"name",liste:false}};
+const roh=Storage.prototype.setItem;
+const lies=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"")||d}catch(e){return d}};
+const merk=(k,v)=>{try{roh.call(localStorage,k,JSON.stringify(v))}catch(e){}};
+const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h)};
+let sitzung=lies("mietixSitzung",null),laeuft=false,nochmal=false,zuletzt=null,fehler="";
+
+/* ---------- Anmeldung ---------- */
+async function auth(pfad,body){const r=await fetch(URL_+"/auth/v1/"+pfad,{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error_description||j.msg||j.message||"Anmeldung fehlgeschlagen");return j}
+function sichern(j){sitzung={token:j.access_token,neu:j.refresh_token,bis:Date.now()+(j.expires_in||3600)*1000-60000,
+  email:(j.user&&j.user.email)||(sitzung&&sitzung.email)||""};merk("mietixSitzung",sitzung)}
+async function token(){if(!sitzung)return null;
+  if(Date.now()>sitzung.bis){try{sichern(await auth("token?grant_type=refresh_token",{refresh_token:sitzung.neu}))}
+    catch(e){if(navigator.onLine){sitzung=null;localStorage.removeItem("mietixSitzung");zeigen()}return null}}
+  return sitzung.token}
+async function api(pfad,opt){const t=await token();if(!t)throw new Error("nicht angemeldet");
+  const r=await fetch(URL_+"/rest/v1/"+pfad,Object.assign({},opt,{headers:Object.assign({apikey:KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},(opt||{}).headers||{})}));
+  if(!r.ok)throw new Error("Speicher antwortet "+r.status);const s=await r.text();return s?JSON.parse(s):null}
+
+/* ---------- Abgleich ---------- */
+function alsMap(k,w){const c=SPEICHER[k],m={};if(c.liste)(w||[]).forEach(x=>{if(x&&x[c.pk]!==undefined)m[String(x[c.pk])]=x});else Object.assign(m,w||{});return m}
+function ausMap(k,m){const c=SPEICHER[k];if(!c.liste)return m;return Object.keys(m).sort().map(p=>m[p])}
+async function abgleichen(){
+  if(!sitzung||!navigator.onLine)return;if(laeuft){nochmal=true;return}laeuft=true;fehler="";zeigen();
+  const H=lies("mietixAbgleich",{}),geholt=[];
+  try{
+    for(const k of Object.keys(SPEICHER)){const c=SPEICHER[k],h=H[k]=H[k]||{zeit:"",hash:{}},m=alsMap(k,lies(k,c.liste?[]:{}));
+      // 1) hoch: alles, was sich hier seit dem letzten Abgleich geändert hat (auch Gelöschtes)
+      const jetzt=new Date().toISOString(),hoch=[];
+      Object.keys(m).forEach(p=>{const s=JSON.stringify(m[p]);if(h.hash[p]!==hash(s))hoch.push({[c.pk]:p,daten:m[p],geaendert:jetzt})});
+      Object.keys(h.hash).forEach(p=>{if(!(p in m)&&h.hash[p]!=="weg")hoch.push({[c.pk]:p,daten:{_weg:true},geaendert:jetzt})});
+      for(let i=0;i<hoch.length;i+=200)await api(c.tab+"?on_conflict="+c.pk,{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(hoch.slice(i,i+200))});
+      hoch.forEach(z=>h.hash[z[c.pk]]=z.daten._weg?"weg":hash(JSON.stringify(z.daten)));
+      if(k==="mietixVorgaenge"){const max=Math.max(0,...Object.keys(m).filter(n=>/^\d{6}$/.test(n)).map(Number));
+        if(max)await api("rpc/vertragsnummer_mindestens",{method:"POST",body:JSON.stringify({n:max})})}
+      // 2) runter: was die anderen Geräte seit dem letzten Mal geschickt haben
+      const seit=h.zeit?"&geaendert=gt."+encodeURIComponent(h.zeit):"";
+      const zeilen=await api(c.tab+"?select="+c.pk+",daten,geaendert&order=geaendert.asc"+seit,{method:"GET"})||[];
+      let anders=false;const m2=alsMap(k,lies(k,c.liste?[]:{}));
+      zeilen.forEach(z=>{const p=String(z[c.pk]);h.zeit=z.geaendert>h.zeit?z.geaendert:h.zeit;
+        if(z.daten&&z.daten._weg){if(p in m2){delete m2[p];anders=true}h.hash[p]="weg";return}
+        const s=JSON.stringify(z.daten);if(!(p in m2)||JSON.stringify(m2[p])!==s){m2[p]=z.daten;anders=true}h.hash[p]=hash(s)});
+      if(anders){merk(k,ausMap(k,m2));geholt.push(k)}}
+    merk("mietixAbgleich",H);zuletzt=new Date();
+    if(geholt.length)window.dispatchEvent(new CustomEvent("mietix-abgleich",{detail:geholt}));
+  }catch(e){fehler=e.message||"Abgleich fehlgeschlagen"}
+  laeuft=false;zeigen();if(nochmal){nochmal=false;setTimeout(abgleichen,500)}}
+// Jede Änderung an den vier Speichern löst kurz danach einen Abgleich aus
+let warte=null;
+Storage.prototype.setItem=function(k,v){roh.call(this,k,v);if(this===localStorage&&SPEICHER[k]){clearTimeout(warte);warte=setTimeout(abgleichen,800)}};
+
+/* ---------- Vertragsnummer aus dem gemeinsamen Speicher ---------- */
+window.mietixNeueNummer=async function(){if(!sitzung||!navigator.onLine)return null;
+  try{const n=await api("rpc/neue_vertragsnummer",{method:"POST",body:"{}"});return typeof n==="string"?n:null}catch(e){return null}};
+window.mietixAbgleichen=abgleichen;
+
+/* ---------- Link aus der Einladungs- oder Passwort-Mail: Passwort selbst festlegen ---------- */
+let pwSetzen=false,linkFehler="";
+(function(){const h=new URLSearchParams(location.hash.slice(1));if(!h.get("access_token")&&!h.get("error"))return;
+  history.replaceState(null,"",location.pathname+location.search);
+  if(h.get("error")){linkFehler="Der Link aus der Mail ist abgelaufen oder schon benutzt. Bitte eine neue Einladung anfordern.";return}
+  sichern({access_token:h.get("access_token"),refresh_token:h.get("refresh_token"),expires_in:+h.get("expires_in")||3600});
+  pwSetzen=/invite|recovery|signup/.test(h.get("type")||"")})();
+
+/* ---------- Anzeige: Anmeldung oder Stand ---------- */
+function zeigen(){const el=document.getElementById("abgleich");if(!el)return;
+  if(sitzung&&pwSetzen){el.innerHTML='<div class="abgl"><b>Passwort festlegen</b><div class="abgl-text">Für '+(sitzung.email||"dieses Konto")+'. Damit meldest du dich auf allen Geräten an, auch für die Brücke. Mindestens 8 Zeichen.</div>'+
+    '<input id="ablNeu" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Neues Passwort (sichtbar, damit kein Tippfehler)">'+
+    '<button id="ablSetzen" type="button">Passwort speichern</button><div class="abgl-fehler" id="ablFehler"></div></div>';
+    document.getElementById("ablSetzen").onclick=async()=>{const pw=document.getElementById("ablNeu").value,f=document.getElementById("ablFehler");
+      if(pw.length<8){f.textContent="Bitte mindestens 8 Zeichen.";return}
+      try{const t=await token();const r=await fetch(URL_+"/auth/v1/user",{method:"PUT",headers:{apikey:KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+        if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.msg||j.message||"Speichern ging nicht")}
+        pwSetzen=false;zeigen();abgleichen()}catch(e){f.textContent=e.message}};return}
+  const pkt=document.getElementById("abgleichPunkt");
+  if(pkt)pkt.style.background=!sitzung?"#B0B0B3":fehler?"#C4161C":"#1B8A4B";
+  if(!sitzung){el.innerHTML='<div class="abgl"><b>Geräte abgleichen</b><div class="abgl-text">Einmal anmelden, dann sind Verträge und Anfragen auf allen Geräten gleich.</div>'+
+    '<input id="ablMail" type="email" inputmode="email" autocomplete="username" placeholder="E-Mail">'+
+    '<input id="ablPw" type="password" autocomplete="current-password" placeholder="Passwort">'+
+    '<button id="ablLos" type="button">Anmelden</button><div class="abgl-fehler" id="ablFehler">'+linkFehler+'</div>'+
+    '<a href="#" id="ablNeuZugang" class="abgl-link">Noch keinen Zugang? Hier anlegen</a></div>';
+    const mail=()=>document.getElementById("ablMail").value.trim(),pw=()=>document.getElementById("ablPw").value,f=document.getElementById("ablFehler");
+    document.getElementById("ablLos").onclick=async()=>{f.textContent="";
+      try{sichern(await auth("token?grant_type=password",{email:mail(),password:pw()}));
+        zeigen();abgleichen()}catch(e){f.textContent=/Invalid login/i.test(e.message)?"E-Mail oder Passwort stimmt nicht.":e.message}};
+    // Zugang selbst anlegen: geht nur, solange Baran die Registrierung in Supabase kurz freigibt
+    document.getElementById("ablNeuZugang").onclick=async e=>{e.preventDefault();f.textContent="";
+      if(!mail()||pw().length<8){f.textContent="Oben E-Mail und ein eigenes Passwort (mindestens 8 Zeichen) eintragen, dann hier tippen.";return}
+      try{const j=await auth("signup",{email:mail(),password:pw()});
+        if(j.access_token){sichern(j);zeigen();abgleichen()}else f.textContent="Zugang angelegt. Bitte die Mail bestätigen und dann anmelden."}
+      catch(e){f.textContent=/not allowed|disabled/i.test(e.message)?"Zugang anlegen ist gerade gesperrt. Baran muss es kurz freigeben.":
+        /already/i.test(e.message)?"Für diese E-Mail gibt es schon einen Zugang. Bitte oben anmelden.":e.message}};return}
+  const stand=laeuft?"gleicht ab …":fehler?"nicht abgeglichen: "+fehler:zuletzt?"abgeglichen um "+String(zuletzt.getHours()).padStart(2,"0")+":"+String(zuletzt.getMinutes()).padStart(2,"0"):"wartet auf Internet";
+  el.innerHTML='<div class="abgl klein"><span>Alle Geräte: '+stand+'</span><span><a href="#" id="ablPwNeu">Passwort ändern</a> &nbsp; <a href="#" id="ablAus">abmelden</a></span></div>';
+  // Angemeldet: neues Passwort setzen geht ohne das alte (für "Passwort vergessen" ohne Mail, 28.10.2026)
+  document.getElementById("ablPwNeu").onclick=e=>{e.preventDefault();pwSetzen=true;zeigen()};
+  document.getElementById("ablAus").onclick=e=>{e.preventDefault();if(!confirm("Auf diesem Gerät abmelden? Die Daten bleiben hier."))return;
+    sitzung=null;localStorage.removeItem("mietixSitzung");zeigen()}}
+const css=document.createElement("style");
+css.textContent=".abgl{background:#fff;border:1px solid #E4E4E7;border-radius:16px;padding:14px;margin-bottom:14px}"+
+  ".abgl b{display:block;font-size:15px;margin-bottom:4px}.abgl-text{font-size:13px;color:#6F6F72;margin-bottom:8px}"+
+  ".abgl input{width:100%;border:1px solid #E4E4E7;border-radius:12px;padding:12px;font:600 16px inherit;margin-top:6px;min-height:46px;box-sizing:border-box}"+
+  ".abgl button{width:100%;margin-top:8px;background:#C4161C;color:#fff;border:0;border-radius:12px;padding:13px;font:800 16px inherit;cursor:pointer}"+
+  ".abgl-fehler{color:#C4161C;font-size:13px;font-weight:700;margin-top:6px}"+
+  ".abgl-link{display:block;text-align:center;margin-top:10px;font-size:13px;color:#6F6F72}"+
+  ".abgl.klein{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#6F6F72;padding:10px 14px}.abgl.klein a{color:#6F6F72}";
+document.head.appendChild(css);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)abgleichen()});
+window.addEventListener("online",abgleichen);
+setInterval(abgleichen,60000);
+zeigen();abgleichen();
+})();
+</script></body></html>
