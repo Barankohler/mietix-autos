@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Mietix Autos</title>
 <style>
-input,select,textarea{font-size:16px;font-family:inherit}
+input,select,textarea{font-size:16px;font-family:inherit;max-width:100%;box-sizing:border-box}input[type=date],input[type=time],input[type=datetime-local]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;min-height:44px}select{min-width:0}
 
 :root{--rot:#C4161C;--text:#2E2E30;--rand:#E4E4E7;--grau:#6F6F72;--bg:#F6F6F7;--gruen:#1B8A4B;--hell:#FDECEC;--gelb:#FFF4D6}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -97,7 +97,7 @@ function zeichneAutos(){
       (a.notiz?'<div class="zeile"><span class="grau" style="font-size:12px">'+a.notiz+'</span></div>':'')+
       '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'" data-seit="'+de(p.datum)+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
       (erl.length?'<div class="erl"><a href="#">'+erl.length+(erl.length===1?' erledigter Punkt':' erledigte Punkte')+', zeigen</a><div class="versteckt">'+erl.map(p=>'<div class="punkt alt" data-auf="'+p.id+'"><span class="box an"></span><span><span class="t">'+p.text+'</span><i>erledigt '+de(p.erledigtAm||p.datum)+', antippen = wieder öffnen</i></span></div>').join("")+'</div></div>':'')+
-      '<div class="neu"><input placeholder="Neuer Punkt, z. B. Kratzer Felge vorne links" data-neu="'+n+'"><button data-neuz="'+n+'">+</button></div></div>'}).join("")||'<div class="leer">Preisdatei wird geladen …</div>';
+      '<div class="neu"><input placeholder="Neuer Punkt, z. B. Kratzer" data-neu="'+n+'"><button data-neuz="'+n+'">+</button></div></div>'}).join("")||'<div class="leer">Preisdatei wird geladen …</div>';
   // Sicherheitsnetz: erst antippen = Rückfrage, nochmal antippen = erledigt. Erledigte lassen sich wieder öffnen.
   [...$("autos").querySelectorAll(".punkt[data-z]")].forEach(e=>e.onclick=()=>{
     if(!e.classList.contains("frag")){e.classList.add("frag");e.querySelector("i").textContent="Wirklich erledigt? Nochmal antippen = ja";
