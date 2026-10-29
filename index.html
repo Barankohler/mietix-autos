@@ -7,6 +7,8 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Mietix Autos</title>
 <style>
+input,select,textarea{font-size:16px;font-family:inherit}
+
 :root{--rot:#C4161C;--text:#2E2E30;--rand:#E4E4E7;--grau:#6F6F72;--bg:#F6F6F7;--gruen:#1B8A4B;--hell:#FDECEC;--gelb:#FFF4D6}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);padding-bottom:40px;-webkit-text-size-adjust:100%}
@@ -33,8 +35,8 @@ main{max-width:680px;margin:0 auto;padding:16px}
 .erl a{display:block;font-size:13px;color:var(--grau);font-weight:700;padding:8px 0;text-decoration:none}
 .neu{display:flex;gap:8px;margin-top:10px}
 .neu input,.neu select{min-width:0;width:0}
-.neu input{flex:1;border:1px solid var(--rand);border-radius:12px;padding:11px 12px;font:600 15px inherit;min-height:46px}
-.neu button{background:var(--rot);color:#fff;border:0;border-radius:12px;padding:0 16px;font:800 16px inherit;cursor:pointer}
+.neu input{flex:1;border:1px solid var(--rand);border-radius:12px;padding:11px 12px;font-weight:600;font-size:16px;font-family:inherit;min-height:46px}
+.neu button{background:var(--rot);color:#fff;border:0;border-radius:12px;padding:0 16px;font-weight:800;font-size:16px;font-family:inherit;cursor:pointer}
 .leer{color:var(--grau);text-align:center;padding:12px;font-size:14px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip{padding:8px 11px;border-radius:999px;border:1px solid var(--rand);background:#fff;font-weight:700;font-size:13px;cursor:pointer}
@@ -48,7 +50,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
 <div id="abgleich"></div>
 <section id="s_autos">
   <div class="karte"><h2>Wer fuhr wann? (Bußgeld, Blitzer, Parkverstoß)</h2>
-    <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1"><select id="wfAuto" style="flex:1.4;border:1px solid var(--rand);border-radius:12px;padding:11px;font:600 15px inherit;background:#fff"></select></div>
+    <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1"><select id="wfAuto" style="flex:1.4;border:1px solid var(--rand);border-radius:12px;padding:11px;font-weight:600;font-size:16px;font-family:inherit;background:#fff;min-width:0"></select></div>
     <div id="wfErgebnis" class="leer" style="text-align:left">Datum und Auto wählen.</div></div>
   <div id="autos"></div></section>
 <section id="s_aufgaben" class="versteckt">
@@ -306,8 +308,8 @@ function zeigen(){const el=document.getElementById("abgleich");if(!el)return;
 const css=document.createElement("style");
 css.textContent=".abgl{background:#fff;border:1px solid #E4E4E7;border-radius:16px;padding:14px;margin-bottom:14px}"+
   ".abgl b{display:block;font-size:15px;margin-bottom:4px}.abgl-text{font-size:13px;color:#6F6F72;margin-bottom:8px}"+
-  ".abgl input{width:100%;border:1px solid #E4E4E7;border-radius:12px;padding:12px;font:600 16px inherit;margin-top:6px;min-height:46px;box-sizing:border-box}"+
-  ".abgl button{width:100%;margin-top:8px;background:#C4161C;color:#fff;border:0;border-radius:12px;padding:13px;font:800 16px inherit;cursor:pointer}"+
+  ".abgl input{width:100%;border:1px solid #E4E4E7;border-radius:12px;padding:12px;font-weight:600;font-size:16px;font-family:inherit;margin-top:6px;min-height:46px;box-sizing:border-box}"+
+  ".abgl button{width:100%;margin-top:8px;background:#C4161C;color:#fff;border:0;border-radius:12px;padding:13px;font-weight:800;font-size:16px;font-family:inherit;cursor:pointer}"+
   ".abgl-fehler{color:#C4161C;font-size:13px;font-weight:700;margin-top:6px}"+
   ".abgl-link{display:block;text-align:center;margin-top:10px;font-size:13px;color:#6F6F72}"+
   ".abgl.klein{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#6F6F72;padding:10px 14px}.abgl.klein a{color:#6F6F72}"+
