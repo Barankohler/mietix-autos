@@ -114,6 +114,8 @@ function zeichneAutos(){
       '<div class="zeile"><span>Gerade</span><b>'+(jetzt?'<span class="rot">unterwegs: '+jetzt.name+' bis '+de(jetzt.bisD)+'</span>':'<span class="gruen">frei</span>')+'</b></div>'+
       '<div class="zeile"><span>Nächste Miete</span><b>'+(naechste?naechste.name+", "+de(naechste.vonD):'<span class="grau">keine</span>')+'</b></div>'+
       termin("TÜV",a.tuev)+termin("Service",a.service)+termin("Reifen",a.reifen)+
+      // Garantie (30.10.2026, Baran): bis wann und über wen, aus dem Reiter Autos der Excel (garantie, garantieUeber)
+      termin("Garantie"+(a.garantieUeber?" ("+a.garantieUeber+")":""),a.garantie)+
       (a.notiz?'<div class="zeile"><span class="grau" style="font-size:12px">'+a.notiz+'</span></div>':'')+
       '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'" data-seit="'+de(p.datum)+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
       (erl.length?'<div class="erl"><a href="#">'+erl.length+(erl.length===1?' erledigter Punkt':' erledigte Punkte')+', zeigen</a><div class="versteckt">'+erl.map(p=>'<div class="punkt alt" data-auf="'+p.id+'"><span class="box an"></span><span><span class="t">'+p.text+'</span><i>erledigt '+de(p.erledigtAm||p.datum)+', antippen = wiederherstellen</i></span></div>').join("")+'</div></div>':'')+
@@ -145,7 +147,7 @@ $("wfDatum").addEventListener("change",wfSuchen);$("wfAuto").addEventListener("c
 /* ---------- Aufgaben ---------- */
 // TÜV, Service, Reifen: 30 Tage vorher als Termin, von selbst (aus dem Reiter Autos der Excel)
 function termineListe(){const st=lies("mietixAutos",{}),l=[];
-  Object.keys(st).forEach(n=>[["tuev","TÜV"],["service","Service"],["reifen","Reifen"]].forEach(([k,t])=>{const d=st[n][k];if(!d)return;const tage=tageBis(d);if(tage<=30)l.push({auto:n,was:t,datum:d,tage})}));
+  Object.keys(st).forEach(n=>[["tuev","TÜV"],["service","Service"],["reifen","Reifen"],["garantie","Garantie"]].forEach(([k,t])=>{const d=st[n][k];if(!d)return;const tage=tageBis(d);if(tage<=30)l.push({auto:n,was:t,datum:d,tage})}));
   return l.sort((a,b)=>a.tage-b.tage)}
 function zeichneTermine(){const l=termineListe();$("termineKarte").classList.toggle("versteckt",!l.length);
   $("termine").innerHTML=l.map(x=>'<div class="punkt'+(x.tage<=7?" heute":"")+'" style="cursor:default"><span><span class="t">'+x.was+" "+x.auto+'</span><i>'+(x.tage<0?"überfällig seit "+de(x.datum):x.tage===0?"heute":"in "+x.tage+" Tagen, "+de(x.datum))+'</i></span></div>').join("")}
