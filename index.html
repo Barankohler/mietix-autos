@@ -23,6 +23,9 @@ main{max-width:680px;margin:0 auto;padding:16px}
 .auto h3{font-size:18px;font-weight:900}
 .auto .kz{font-size:13px;color:var(--grau);font-weight:700;margin-bottom:8px}
 .zeile{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--rand);font-size:14px}
+.fs{align-items:center}.fs i{display:block;font-style:normal;font-size:12px;color:#6F6F72}.fsKn{display:flex;gap:6px}
+.fsKn button,.fsKn label{border:1.5px solid var(--rand);background:#fff;border-radius:999px;padding:7px 12px;font:700 13px inherit;cursor:pointer}
+.fsKn button{background:#C4161C;border-color:#C4161C;color:#fff}.fsKn button[disabled]{opacity:.4}
 .zeile:last-child{border-bottom:0}.zeile b{font-weight:800}
 .rot{color:var(--rot)}.gruen{color:var(--gruen)}.grau{color:var(--grau)}
 .punkt{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rand);cursor:pointer}
@@ -116,6 +119,7 @@ function zeichneAutos(){
       termin("TÜV",a.tuev)+termin("Service",a.service)+termin("Reifen",a.reifen)+
       // Garantie (30.10.2026, Baran): bis wann und über wen, aus dem Reiter Autos der Excel (garantie, garantieUeber)
       termin("Garantie"+(a.garantieUeber?" ("+a.garantieUeber+")":""),a.garantie)+
+      '<div class="zeile fs" data-fs="'+n+'"><span>Fahrzeugschein<i class="fsStand"></i></span><span class="fsKn"><button type="button" class="fsAuf">Öffnen</button><label class="fsHoch">Hochladen<input type="file" accept="image/*,application/pdf" hidden></label></span></div>'+
       (a.notiz?'<div class="zeile"><span class="grau" style="font-size:12px">'+a.notiz+'</span></div>':'')+
       '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'" data-seit="'+de(p.datum)+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
       (erl.length?'<div class="erl"><a href="#">'+erl.length+(erl.length===1?' erledigter Punkt':' erledigte Punkte')+', zeigen</a><div class="versteckt">'+erl.map(p=>'<div class="punkt alt" data-auf="'+p.id+'"><span class="box an"></span><span><span class="t">'+p.text+'</span><i>erledigt '+de(p.erledigtAm||p.datum)+', antippen = wiederherstellen</i></span></div>').join("")+'</div></div>':'')+
@@ -171,6 +175,38 @@ zeichneAutos();zeichneAufgaben();
 wfFuellen();
 fetch("https://barankohler.github.io/mietix-preise/preise.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p&&p.cars){D=p;zeichneAutos();wfFuellen()}}).catch(()=>{});
 window.addEventListener("mietix-abgleich",()=>{zeichneAutos();zeichneAufgaben()});
+/* Fahrzeugscheine (30.10.2026, Baran): geschützter Speicher (Supabase Storage, Ordner fahrzeugscheine, nur angemeldet).
+   Nichts wird gelöscht oder überschrieben: ein neuer Schein kommt dazu, angezeigt wird immer der neueste. */
+const FS_URL="https://zbeqrwvlmiulxvhryiku.supabase.co/storage/v1",FS_KEY="sb_publishable_LVkvpgXMpBbq_OXgwOfTqg_ZRcRkFyQ",FS={};
+const fsOrdner=n=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"");
+async function fsToken(){let s=lies("mietixSitzung",null);if(!s||!s.token)return null;
+  if(Date.now()>s.bis){try{if(window.mietixAbgleichen)await window.mietixAbgleichen()}catch(e){}s=lies("mietixSitzung",null)}return s&&s.token}
+async function fsHole(pfad,opt){const t=await fsToken();if(!t)throw new Error("Bitte erst anmelden.");
+  const r=await fetch(FS_URL+pfad,Object.assign({},opt,{headers:Object.assign({apikey:FS_KEY,Authorization:"Bearer "+t},(opt||{}).headers||{})}));
+  if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.message||j.error||("Fehler "+r.status))}return r.json()}
+async function fsNeuester(n){const l=await fsHole("/object/list/fahrzeugscheine",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({prefix:fsOrdner(n)+"/",limit:100,sortBy:{column:"name",order:"desc"}})});
+  const d=(l||[]).filter(x=>x.name&&x.id);return d.length?d[0].name:null}
+function fsZeigen(){document.querySelectorAll(".fs").forEach(z=>{const n=z.dataset.fs,f=FS[n];
+  z.querySelector(".fsStand").textContent=f===undefined?"":f?"hinterlegt, Stand "+de(f.slice(0,10)):"noch keiner hinterlegt";
+  z.querySelector(".fsAuf").disabled=f===null})}
+async function fsLaden(){if(!lies("mietixSitzung",null))return;const namen=[...document.querySelectorAll(".fs")].map(z=>z.dataset.fs);
+  for(const n of namen){if(FS[n]!==undefined)continue;try{FS[n]=await fsNeuester(n)}catch(e){return}}fsZeigen()}
+function fsKnoepfe(){document.querySelectorAll(".fs").forEach(z=>{const n=z.dataset.fs;
+  z.querySelector(".fsAuf").onclick=async()=>{const w=window.open("","_blank");
+    try{const datei=FS[n]||await fsNeuester(n);if(!datei){if(w)w.close();meldung("Noch kein Fahrzeugschein hinterlegt");return}
+      const j=await fsHole("/object/sign/fahrzeugscheine/"+fsOrdner(n)+"/"+encodeURIComponent(datei),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({expiresIn:600})});
+      const url=FS_URL+(j.signedURL||j.signedUrl);if(w)w.location=url;else location.href=url}
+    catch(e){if(w)w.close();alert(e.message)}};
+  z.querySelector("input").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+    if(f.size>20*1024*1024){alert("Die Datei ist zu groß (höchstens 20 MB).");return}
+    const d=new Date(),p2=x=>String(x).padStart(2,"0"),endung=(f.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+    const name=d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())+"_"+p2(d.getHours())+p2(d.getMinutes())+p2(d.getSeconds())+"."+endung;
+    meldung("Wird hochgeladen …");
+    try{await fsHole("/object/fahrzeugscheine/"+fsOrdner(n)+"/"+name,{method:"POST",headers:{"Content-Type":f.type||"application/octet-stream","x-upsert":"false"},body:f});
+      FS[n]=name;fsZeigen();meldung("Fahrzeugschein gespeichert")}catch(err){alert("Hochladen hat nicht geklappt: "+err.message)}}})}
+{const _za=zeichneAutos;zeichneAutos=function(){const r=_za.apply(this,arguments);try{fsKnoepfe();fsZeigen();fsLaden()}catch(e){}return r}}
+zeichneAutos();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){zeichneAutos();zeichneAufgaben()}});
 </script>
 <script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
