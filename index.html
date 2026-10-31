@@ -27,6 +27,15 @@ main{max-width:680px;margin:0 auto;padding:16px}
 .fsKn button,.fsKn label{border:1.5px solid var(--rand);background:#fff;border-radius:999px;padding:7px 12px;font:700 13px inherit;cursor:pointer}
 .fsKn button{background:#C4161C;border-color:#C4161C;color:#fff}.fsKn button[disabled]{opacity:.4}
 .zeile:last-child{border-bottom:0}.zeile b{font-weight:800}
+/* Termine direkt eintragen (31.10.2026): Zeile antippen, Fenster mit Datum */
+.zeile.tipp{cursor:pointer;-webkit-tap-highlight-color:transparent;align-items:center}.zeile.tipp:active{background:#F6F6F7}
+.zeile.tipp .wert{display:flex;align-items:center;gap:8px;text-align:right}.zeile.tipp .pf{color:var(--rot);font-size:20px;font-weight:700;line-height:1}
+.zeile.tipp .eintr{color:var(--rot);font-weight:800}
+.tFeld{width:100%;box-sizing:border-box;border:1px solid var(--rand);border-radius:14px;padding:14px;font-size:17px;font-family:inherit;min-height:52px;margin:6px 0 4px;background:#fff;-webkit-appearance:none;appearance:none}
+.tLab{display:block;font-size:13px;font-weight:800;color:var(--grau);margin-top:12px}
+.tChips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 2px}.tChips div{padding:9px 13px;border-radius:999px;border:1px solid var(--rand);font-weight:700;font-size:14px;cursor:pointer;background:#fff}
+.tOk{display:block;width:100%;margin-top:16px;background:var(--rot);color:#fff;border:0;border-radius:14px;padding:15px;font-weight:800;font-size:17px;font-family:inherit;cursor:pointer}
+.tWeg{display:block;width:100%;margin-top:8px;background:none;border:0;color:var(--grau);font-weight:700;font-size:15px;padding:10px;font-family:inherit;cursor:pointer}
 .rot{color:var(--rot)}.gruen{color:var(--gruen)}.grau{color:var(--grau)}
 .punkt{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rand);cursor:pointer}
 .punkt:last-child{border-bottom:0}
@@ -84,6 +93,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
   <div class="karte"><h2>Offene Aufgaben</h2><div id="aufgaben"></div></div>
 </section>
 </main>
+<div class="mxFenster" id="fTermin" role="dialog" aria-label="Termin eintragen"><div class="mxKopf"><h3>Termin eintragen</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><div class="grau" id="tAuto" style="font-weight:700;margin-top:-4px"></div><label class="tLab" id="tLab" for="tDatum">Datum</label><input type="date" class="tFeld" id="tDatum"><div id="tUeberW" class="versteckt"><label class="tLab" for="tUeber">Über wen?</label><input class="tFeld" id="tUeber" placeholder="z. B. Hersteller oder Garantiefirma"><div class="tChips"><div data-ue="Hersteller">Hersteller</div><div data-ue="Händler">Händler</div><div data-ue="Garantieversicherung">Garantieversicherung</div></div></div><button class="tOk" type="button" id="tOk">Speichern</button><button class="tWeg" type="button" id="tWeg">Eintrag löschen</button></div>
 <div class="mxFenster" id="fWer" role="dialog" aria-label="Wer fuhr wann?"><div class="mxKopf"><h3>Wer fuhr wann?</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><p class="mxText">Datum und Auto wählen, dann stehen die Fahrerdaten zum Kopieren da.</p><div id="wfInhalt">
     <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1"><select id="wfAuto" style="flex:1.4;border:1px solid var(--rand);border-radius:12px;padding:11px;font-weight:600;font-size:16px;font-family:inherit;background:#fff;min-width:0"></select></div>
     <div id="wfErgebnis" class="leer" style="text-align:left">Datum und Auto wählen.</div></div></div>
@@ -103,12 +113,25 @@ const heute=()=>iso(new Date());
 const tageBis=s=>s?Math.round((new Date(s+"T12:00")-new Date(heute()+"T12:00"))/86400000):null;
 
 /* ---------- Autos ---------- */
-function termin(name,datum){const t=tageBis(datum);if(t===null)return'<div class="zeile"><span>'+name+'</span><span class="grau">kein Datum</span></div>';
-  const k=t<0?"rot":t<=30?"rot":"";return'<div class="zeile"><span>'+name+'</span><b class="'+k+'">'+de(datum)+(t<0?" (überfällig)":t<=30?" (in "+t+" Tagen)":"")+'</b></div>'}
+function termin(name,datum,feld,auto){const t=tageBis(datum),da=' data-feld="'+feld+'" data-auto="'+auto+'"';
+  if(t===null)return'<div class="zeile tipp"'+da+'><span>'+name+'</span><span class="wert"><span class="eintr">eintragen</span><span class="pf">›</span></span></div>';
+  const k=t<0?"rot":t<=30?"rot":"";return'<div class="zeile tipp"'+da+'><span>'+name+'</span><span class="wert"><b class="'+k+'">'+de(datum)+(t<0?" (überfällig)":t<=30?" (in "+t+" Tagen)":"")+'</b><span class="pf">›</span></span></div>'}
 // Garantie: „bis TT.MM.JJJJ, über X“, ab 30 Tagen vor Ablauf rot (Brücke liefert garantie als ISO-Datum, garantieUeber als Text)
-function garantieZeile(a){const t=tageBis(a.garantie),ue=a.garantieUeber?", über "+a.garantieUeber:"";
-  if(t===null)return'<div class="zeile"><span>Garantie</span><span class="grau">'+(ue?"Datum fehlt"+ue:"nicht eingetragen")+'</span></div>';
-  const k=t<=30?"rot":"";return'<div class="zeile"><span>Garantie</span><b class="'+k+'">'+(t<0?"abgelaufen am "+de(a.garantie):"bis "+de(a.garantie)+(t<=30?" (in "+t+" Tagen)":""))+ue+'</b></div>'}
+function garantieZeile(a,auto){const t=tageBis(a.garantie),ue=a.garantieUeber?", über "+a.garantieUeber:"",da=' data-feld="garantie" data-auto="'+auto+'"';
+  if(t===null)return'<div class="zeile tipp"'+da+'><span>Garantie</span><span class="wert">'+(ue?'<span class="grau">Datum fehlt'+ue+'</span>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>';
+  const k=t<=30?"rot":"";return'<div class="zeile tipp"'+da+'><span>Garantie</span><span class="wert"><b class="'+k+'">'+(t<0?"abgelaufen am "+de(a.garantie):"bis "+de(a.garantie)+(t<=30?" (in "+t+" Tagen)":""))+ue+'</b><span class="pf">›</span></span></div>'}
+// Termin eintragen (31.10.2026, Baran: "nebendran ein Eintragefeld"): geht sofort aufs Handy und über die Brücke in die Excel
+const TNAME={tuev:"TÜV",service:"Service",reifen:"Reifen",garantie:"Garantie"};let T_AUTO="",T_FELD="";
+function terminAuf(auto,feld){T_AUTO=auto;T_FELD=feld;const a=lies("mietixAutos",{})[auto]||{};
+  $("fTermin").querySelector("h3").textContent=TNAME[feld]+" eintragen";$("tAuto").textContent=auto;
+  $("tLab").textContent=feld==="garantie"?"Garantie gilt bis":TNAME[feld]+" fällig am";$("tDatum").value=a[feld]||"";
+  $("tUeberW").classList.toggle("versteckt",feld!=="garantie");$("tUeber").value=a.garantieUeber||"";
+  $("tWeg").classList.toggle("versteckt",!a[feld]&&!(feld==="garantie"&&a.garantieUeber));mxAuf("fTermin")}
+function terminSpeichern(loeschen){const st=lies("mietixAutos",{}),a=Object.assign({},st[T_AUTO]||{}),neu={};
+  neu[T_FELD]=loeschen?"":$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
+  if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){$("tDatum").focus();meldung("Bitte ein Datum wählen");return}
+  Object.assign(a,neu);a.handy=Object.assign({},a.handy||{},neu,{am:new Date().toISOString()});st[T_AUTO]=a;schreib("mietixAutos",st);
+  mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert, kommt auch in die Excel")}
 function zeichneAutos(){
   const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):[],stamm=lies("mietixAutos",{}),vorg=lies("mietixVorgaenge",[]),zust=lies("mietixZustand",[]),h=heute();
   Object.keys(stamm).forEach(n=>{if(namen.indexOf(n)<0)namen.push(n)});
@@ -122,9 +145,9 @@ function zeichneAutos(){
       '<div class="zeile"><span>Kilometerstand</span><b>'+(kmStand?km(kmStand):"<span class=grau>unbekannt</span>")+'</b></div>'+
       '<div class="zeile"><span>Gerade</span><b>'+(jetzt?'<span class="rot">unterwegs: '+jetzt.name+' bis '+de(jetzt.bisD)+'</span>':'<span class="gruen">frei</span>')+'</b></div>'+
       '<div class="zeile"><span>Nächste Miete</span><b>'+(naechste?naechste.name+", "+de(naechste.vonD):'<span class="grau">keine</span>')+'</b></div>'+
-      termin("TÜV",a.tuev)+termin("Service",a.service)+termin("Reifen",a.reifen)+
+      termin("TÜV",a.tuev,"tuev",n)+termin("Service",a.service,"service",n)+termin("Reifen",a.reifen,"reifen",n)+
       // Garantie (30.10.2026, Baran): bis wann und über wen, aus dem Reiter Autos der Excel (garantie, garantieUeber)
-      garantieZeile(a)+
+      garantieZeile(a,n)+
       '<div class="zeile fs" data-fs="'+n+'"><span>Fahrzeugschein<i class="fsStand"></i></span><span class="fsKn"><button type="button" class="fsAuf">Öffnen</button><label class="fsHoch">Hochladen<input type="file" accept="image/*,application/pdf" hidden></label></span></div>'+
       (a.notiz?'<div class="zeile"><span class="grau" style="font-size:12px">'+a.notiz+'</span></div>':'')+
       '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'" data-seit="'+de(p.datum)+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
@@ -135,9 +158,10 @@ function zeichneAutos(){
     if(!e.classList.contains("frag")){e.classList.add("frag");e.querySelector("i").textContent="Wirklich erledigt? Nochmal antippen = ja";
       setTimeout(()=>{if(e.isConnected){e.classList.remove("frag");e.querySelector("i").textContent="seit "+e.dataset.seit+", antippen = erledigt"}},4000);return}
     const l=lies("mietixZustand",[]),z=l.find(x=>x.id===e.dataset.z);if(z){z.erledigt=true;z.erledigtAm=heute();schreib("mietixZustand",l);meldung("Erledigt");zeichneAutos()}});
+  [...$("autos").querySelectorAll(".zeile.tipp")].forEach(z=>z.onclick=()=>terminAuf(z.dataset.auto,z.dataset.feld));
   [...$("autos").querySelectorAll(".erl a")].forEach(a=>a.onclick=ev=>{ev.preventDefault();a.nextElementSibling.classList.toggle("versteckt")});
   [...$("autos").querySelectorAll(".punkt[data-auf]")].forEach(e=>e.onclick=()=>{const l=lies("mietixZustand",[]),z=l.find(x=>x.id===e.dataset.auf);
-    if(z){z.erledigt=false;delete z.erledigtAm;schreib("mietixZustand",l);meldung("Wieder offen");zeichneAutos()}});
+    if(z){z.erledigt=false;delete z.erledigtAm;schreib("mietixZustand",l);meldung("Wiederhergestellt");zeichneAutos()}});
   [...$("autos").querySelectorAll("button[data-neuz]")].forEach(b=>b.onclick=()=>{const inp=$("autos").querySelector('input[data-neu="'+b.dataset.neuz+'"]'),t=inp.value.trim();if(!t)return;
     const l=lies("mietixZustand",[]);l.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),auto:b.dataset.neuz,text:t,erledigt:false,datum:heute()});schreib("mietixZustand",l);zeichneAutos()});
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
@@ -215,7 +239,7 @@ function fsKnoepfe(){document.querySelectorAll(".fs").forEach(z=>{const n=z.data
 zeichneAutos();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){zeichneAutos();zeichneAufgaben()}});
 </script>
-<script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
+<script>$("tOk").onclick=()=>terminSpeichern(false);$("tWeg").onclick=()=>{if(confirm("Eintrag wirklich löschen?"))terminSpeichern(true)};$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.onclick=()=>{$("tUeber").value=c.dataset.ue});</script><script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
    Wird von tools/vertrag/build_html.py und tools/anfragen/build_html.py in die Seite eingebaut.
    - Die Werkzeuge arbeiten weiter nur mit localStorage. Dieser Baustein merkt jede Änderung an den vier Speichern,
      schickt sie hoch und holt neue Stände der anderen Geräte (beim Start, beim Zurückkehren zur Seite, jede Minute).
