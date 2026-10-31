@@ -95,8 +95,10 @@ main{max-width:680px;margin:0 auto;padding:16px}
 </section>
 </main>
 <div class="mxFenster" id="fTermin" role="dialog" aria-label="Termin eintragen"><div class="mxKopf"><h3>Termin eintragen</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><div class="grau" id="tAuto" style="font-weight:700;margin-top:-4px"></div><label class="tLab" id="tLab" for="tDatum">Datum</label><input type="date" class="tFeld" id="tDatum"><input class="tFeld versteckt" id="tZahl" inputmode="numeric" data-einheit="km"><textarea class="tFeld versteckt" id="tText" rows="3" ></textarea><div id="tUeberW" class="versteckt"><label class="tLab" for="tUeber">Über wen?</label><input class="tFeld" id="tUeber" placeholder=""><div class="tChips"><div data-ue="Hersteller">Hersteller</div><div data-ue="Händler">Händler</div><div data-ue="Garantieversicherung">Garantieversicherung</div></div></div><button class="tOk" type="button" id="tOk">Speichern</button><button class="tWeg" type="button" id="tWeg">Eintrag löschen</button></div>
-<div class="mxFenster" id="fWer" role="dialog" aria-label="Wer fuhr wann?"><div class="mxKopf"><h3>Wer fuhr wann?</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><p class="mxText">Datum und Auto wählen, dann stehen die Fahrerdaten zum Kopieren da.</p><div id="wfInhalt">
-    <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1"><select id="wfAuto" style="flex:1.4;border:1px solid var(--rand);border-radius:12px;padding:11px;font-weight:600;font-size:16px;font-family:inherit;background:#fff;min-width:0"></select></div>
+<div class="mxFenster" id="fWer" role="dialog" aria-label="Wer fuhr wann?"><div class="mxKopf"><h3>Wer fuhr wann?</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><p class="mxText">Datum, Uhrzeit und Auto wählen, dann stehen die Fahrerdaten zum Kopieren da.</p><div id="wfInhalt">
+    <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1;min-width:0"><input id="wfZeit" type="time" style="flex:0 0 118px;min-width:0" aria-label="Uhrzeit"></div>
+    <div class="neu" style="margin-top:8px"><select id="wfAuto" style="flex:1;border:1px solid var(--rand);border-radius:12px;padding:11px;font-weight:600;font-size:16px;font-family:inherit;background:#fff;min-width:0"></select></div>
+    <p class="grau" style="font-size:13px;margin:6px 2px 0">Uhrzeit nur nötig, wenn das Auto an dem Tag zwei Mieter hatte.</p>
     <div id="wfErgebnis" class="leer" style="text-align:left">Datum und Auto wählen.</div></div></div>
 <div class="meldung" id="meldung"></div>
 <script>
@@ -184,13 +186,16 @@ function zeichneAutos(){
 function wfFuellen(){const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):Object.keys(lies("mietixAutos",{}));const alt=$("wfAuto").value;
   $("wfAuto").innerHTML='<option value="">Auto</option>'+namen.map(n=>'<option>'+n+'</option>').join("");if(alt)$("wfAuto").value=alt}
 function wfSuchen(){const d=$("wfDatum").value,a=$("wfAuto").value;if(!d||!a){$("wfErgebnis").textContent="Datum und Auto wählen.";return}
-  const t=lies("mietixVorgaenge",[]).filter(v=>v.auto===a&&v.vonD&&v.bisD&&v.vonD<=d&&v.bisD>=d);
-  if(!t.length){$("wfErgebnis").innerHTML="Kein Mietvertrag für "+a+" am "+de(d)+". Dann war das Auto bei uns oder in der Werkstatt.";return}
-  $("wfErgebnis").innerHTML=t.map(v=>{const text="Fahrer am "+de(d)+", "+a+(v.kz?" ("+v.kz+")":"")+":\n"+v.name+"\n"+(v.anschrift||"")+"\ngeboren am "+de(v.geb)+(v.gebort?" in "+v.gebort:"")+"\nTelefon "+(v.telefon||"")+(v.email?"\nE-Mail "+v.email:"")+"\nMietvertrag Nr. "+v.nr+", "+de(v.vonD)+" bis "+de(v.bisD);
-    return'<div style="margin-top:6px"><b>'+v.name+'</b><br><span class="grau" style="font-size:13px">'+(v.anschrift||"")+'<br>geb. '+de(v.geb)+(v.gebort?" in "+v.gebort:"")+', Tel. '+(v.telefon||"")+'<br>Mietvertrag '+v.nr+', '+de(v.vonD)+' bis '+de(v.bisD)+'</span>'+
+  // Uhrzeit (31.10.2026, Baran): an einem Tag können zwei Mieter das Auto gehabt haben, Rückgabe morgens, Übergabe mittags
+  const z=$("wfZeit").value,amTag=lies("mietixVorgaenge",[]).filter(v=>v.auto===a&&v.vonD&&v.bisD&&v.vonD<=d&&v.bisD>=d&&v.status!=="storniert");
+  const t=z?amTag.filter(v=>v.vonD+" "+(v.vonU||"00:00")<=d+" "+z&&d+" "+z<=v.bisD+" "+(v.bisU||"23:59")):amTag;
+  if(!t.length){$("wfErgebnis").innerHTML="Kein Mietvertrag für "+a+" am "+de(d)+(z?" um "+z+" Uhr":"")+". Dann war das Auto bei uns oder in der Werkstatt.";return}
+  const zwei=!z&&t.length>1?'<div class="grau" style="font-size:13px;font-weight:700">An dem Tag hatten '+t.length+' Mieter das Auto. Uhrzeit vom Strafzettel eintragen, dann bleibt der richtige stehen.</div>':"";
+  $("wfErgebnis").innerHTML=zwei+t.map(v=>{const text="Fahrer am "+de(d)+(z?" um "+z+" Uhr":"")+", "+a+(v.kz?" ("+v.kz+")":"")+":\n"+v.name+"\n"+(v.anschrift||"")+"\ngeboren am "+de(v.geb)+(v.gebort?" in "+v.gebort:"")+"\nTelefon "+(v.telefon||"")+(v.email?"\nE-Mail "+v.email:"")+"\nMietvertrag Nr. "+v.nr+", "+de(v.vonD)+(v.vonU?" "+v.vonU+" Uhr":"")+" bis "+de(v.bisD)+(v.bisU?" "+v.bisU+" Uhr":"");
+    return'<div style="margin-top:6px"><b>'+v.name+'</b><br><span class="grau" style="font-size:13px">'+(v.anschrift||"")+'<br>geb. '+de(v.geb)+(v.gebort?" in "+v.gebort:"")+', Tel. '+(v.telefon||"")+'<br>Mietvertrag '+v.nr+', '+de(v.vonD)+(v.vonU?" "+v.vonU+" Uhr":"")+' bis '+de(v.bisD)+(v.bisU?" "+v.bisU+" Uhr":"")+'</span>'+
       '<div class="chips"><div class="chip wfKopie" data-t="'+encodeURIComponent(text)+'">Angaben kopieren (für die Fahrerbenennung)</div>'+(v.telefon?'<a class="chip" style="text-decoration:none;color:inherit" target="_blank" href="https://wa.me/'+String(v.telefon).replace(/\D/g,"").replace(/^0/,"49")+'">WhatsApp</a>':'')+'</div></div>'}).join("");
   [...$("wfErgebnis").querySelectorAll(".wfKopie")].forEach(c=>c.onclick=()=>{try{navigator.clipboard.writeText(decodeURIComponent(c.dataset.t))}catch(e){}meldung("Kopiert. In das Formular der Behörde einfügen.")})}
-$("wfDatum").addEventListener("change",wfSuchen);$("wfAuto").addEventListener("change",wfSuchen);
+$("wfDatum").addEventListener("change",wfSuchen);$("wfZeit").addEventListener("change",wfSuchen);$("wfAuto").addEventListener("change",wfSuchen);
 
 /* ---------- Aufgaben ---------- */
 // TÜV, Service, Reifen: 30 Tage vorher als Termin, von selbst (aus dem Reiter Autos der Excel)
