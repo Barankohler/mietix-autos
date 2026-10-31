@@ -31,6 +31,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
 .zeile.tipp{cursor:pointer;-webkit-tap-highlight-color:transparent;align-items:center}.zeile.tipp:active{background:#F6F6F7}
 .zeile.tipp .wert{display:flex;align-items:center;gap:8px;text-align:right}.zeile.tipp .pf{color:var(--rot);font-size:20px;font-weight:700;line-height:1}
 .zeile.tipp .eintr{color:var(--rot);font-weight:800}
+.verschieb{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;color:var(--rot);padding:6px 10px;border-radius:999px;background:#FDECEC;cursor:pointer}
 .tFeld{width:100%;box-sizing:border-box;border:1px solid var(--rand);border-radius:14px;padding:14px;font-size:17px;font-family:inherit;min-height:52px;margin:6px 0 4px;background:#fff;-webkit-appearance:none;appearance:none}
 .tLab{display:block;font-size:13px;font-weight:800;color:var(--grau);margin-top:12px}
 .tChips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 2px}.tChips div{padding:9px 13px;border-radius:999px;border:1px solid var(--rand);font-weight:700;font-size:14px;cursor:pointer;background:#fff}
@@ -93,7 +94,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
   <div class="karte"><h2>Offene Aufgaben</h2><div id="aufgaben"></div></div>
 </section>
 </main>
-<div class="mxFenster" id="fTermin" role="dialog" aria-label="Termin eintragen"><div class="mxKopf"><h3>Termin eintragen</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><div class="grau" id="tAuto" style="font-weight:700;margin-top:-4px"></div><label class="tLab" id="tLab" for="tDatum">Datum</label><input type="date" class="tFeld" id="tDatum"><div id="tUeberW" class="versteckt"><label class="tLab" for="tUeber">Über wen?</label><input class="tFeld" id="tUeber" placeholder="z. B. Hersteller oder Garantiefirma"><div class="tChips"><div data-ue="Hersteller">Hersteller</div><div data-ue="Händler">Händler</div><div data-ue="Garantieversicherung">Garantieversicherung</div></div></div><button class="tOk" type="button" id="tOk">Speichern</button><button class="tWeg" type="button" id="tWeg">Eintrag löschen</button></div>
+<div class="mxFenster" id="fTermin" role="dialog" aria-label="Termin eintragen"><div class="mxKopf"><h3>Termin eintragen</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><div class="grau" id="tAuto" style="font-weight:700;margin-top:-4px"></div><label class="tLab" id="tLab" for="tDatum">Datum</label><input type="date" class="tFeld" id="tDatum"><input class="tFeld versteckt" id="tZahl" inputmode="numeric" data-einheit="km" placeholder="z. B. 41.250"><textarea class="tFeld versteckt" id="tText" rows="3" placeholder="z. B. Kratzer hinten links, Mr. Wash Abo"></textarea><div id="tUeberW" class="versteckt"><label class="tLab" for="tUeber">Über wen?</label><input class="tFeld" id="tUeber" placeholder="z. B. Hersteller oder Garantiefirma"><div class="tChips"><div data-ue="Hersteller">Hersteller</div><div data-ue="Händler">Händler</div><div data-ue="Garantieversicherung">Garantieversicherung</div></div></div><button class="tOk" type="button" id="tOk">Speichern</button><button class="tWeg" type="button" id="tWeg">Eintrag löschen</button></div>
 <div class="mxFenster" id="fWer" role="dialog" aria-label="Wer fuhr wann?"><div class="mxKopf"><h3>Wer fuhr wann?</h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><p class="mxText">Datum und Auto wählen, dann stehen die Fahrerdaten zum Kopieren da.</p><div id="wfInhalt">
     <div class="neu" style="margin-top:0"><input id="wfDatum" type="date" style="flex:1"><select id="wfAuto" style="flex:1.4;border:1px solid var(--rand);border-radius:12px;padding:11px;font-weight:600;font-size:16px;font-family:inherit;background:#fff;min-width:0"></select></div>
     <div id="wfErgebnis" class="leer" style="text-align:left">Datum und Auto wählen.</div></div></div>
@@ -121,17 +122,30 @@ function garantieZeile(a,auto){const t=tageBis(a.garantie),ue=a.garantieUeber?",
   if(t===null)return'<div class="zeile tipp"'+da+'><span>Garantie</span><span class="wert">'+(ue?'<span class="grau">Datum fehlt'+ue+'</span>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>';
   const k=t<=30?"rot":"";return'<div class="zeile tipp"'+da+'><span>Garantie</span><span class="wert"><b class="'+k+'">'+(t<0?"abgelaufen am "+de(a.garantie):"bis "+de(a.garantie)+(t<=30?" (in "+t+" Tagen)":""))+ue+'</b><span class="pf">›</span></span></div>'}
 // Termin eintragen (31.10.2026, Baran: "nebendran ein Eintragefeld"): geht sofort aufs Handy und über die Brücke in die Excel
-const TNAME={tuev:"TÜV",service:"Service",reifen:"Reifen",garantie:"Garantie"};let T_AUTO="",T_FELD="";
-function terminAuf(auto,feld){T_AUTO=auto;T_FELD=feld;const a=lies("mietixAutos",{})[auto]||{};
+const TNAME={tuev:"TÜV",service:"Service",reifen:"Reifen",garantie:"Garantie",km:"Kilometerstand",notiz:"Notiz"};let T_AUTO="",T_FELD="";
+let T_AUFG="";
+function aufgabeVerschieben(id){const a=lies("mietixAufgaben",[]).find(x=>x.id===id);if(!a)return;T_AUFG=id;T_AUTO="";T_FELD="";$("fTermin").dataset.art="datum";
+  $("fTermin").querySelector("h3").textContent="Aufgabe verschieben";$("tAuto").textContent=a.aufgabe;$("tLab").textContent="Fällig am";$("tLab").htmlFor="tDatum";
+  $("tDatum").value=a.bis||"";["tZahl","tText"].forEach(i=>$(i).classList.add("versteckt"));$("tDatum").classList.remove("versteckt");
+  $("tUeberW").classList.add("versteckt");$("tWeg").classList.add("versteckt");mxAuf("fTermin")}
+function terminAuf(auto,feld){T_AUFG="";T_AUTO=auto;T_FELD=feld;const a=lies("mietixAutos",{})[auto]||{};
   $("fTermin").querySelector("h3").textContent=TNAME[feld]+" eintragen";$("tAuto").textContent=auto;
-  $("tLab").textContent=feld==="garantie"?"Garantie gilt bis":TNAME[feld]+" fällig am";$("tDatum").value=a[feld]||"";
+  const art=feld==="km"?"zahl":feld==="notiz"?"text":"datum";$("fTermin").dataset.art=art;
+  $("tLab").textContent=feld==="garantie"?"Garantie gilt bis":feld==="km"?"Kilometerstand jetzt":feld==="notiz"?"Notiz zum Auto":TNAME[feld]+" fällig am";
+  $("tDatum").value=art==="datum"?(a[feld]||""):"";$("tZahl").value=art==="zahl"?(a.km?String(Math.round(zahl(a.km))):""):"";$("tText").value=art==="text"?(a.notiz||""):"";
+  ["tDatum","tZahl","tText"].forEach(i=>$(i).classList.toggle("versteckt",i!==(art==="zahl"?"tZahl":art==="text"?"tText":"tDatum")));
+  $("tLab").htmlFor=art==="zahl"?"tZahl":art==="text"?"tText":"tDatum";
   $("tUeberW").classList.toggle("versteckt",feld!=="garantie");$("tUeber").value=a.garantieUeber||"";
   $("tWeg").classList.toggle("versteckt",!a[feld]&&!(feld==="garantie"&&a.garantieUeber));mxAuf("fTermin")}
-function terminSpeichern(loeschen){const st=lies("mietixAutos",{}),a=Object.assign({},st[T_AUTO]||{}),neu={};
-  neu[T_FELD]=loeschen?"":$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
-  if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){$("tDatum").focus();meldung("Bitte ein Datum wählen");return}
+function terminSpeichern(loeschen){
+  if(T_AUFG){const d=$("tDatum").value;if(!d){meldung("Bitte ein Datum wählen");return}const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===T_AUFG);
+    if(a){a.bis=d;a.bisNeu={bis:d,am:new Date().toISOString()};schreib("mietixAufgaben",l)}T_AUFG="";mxZu();zeichneAufgaben();meldung("✓ Verschoben auf "+de(d)+", kommt auch in die Excel");return}
+  const st=lies("mietixAutos",{}),a=Object.assign({},st[T_AUTO]||{}),neu={};
+  const art=$("fTermin").dataset.art;neu[T_FELD]=loeschen?"":art==="zahl"?String(zahl($("tZahl").value)||""):art==="text"?$("tText").value.trim():$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
+  if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){meldung(art==="zahl"?"Bitte den Kilometerstand eintragen":art==="text"?"Bitte etwas eintragen":"Bitte ein Datum wählen");return}
   Object.assign(a,neu);a.handy=Object.assign({},a.handy||{},neu,{am:new Date().toISOString()});st[T_AUTO]=a;schreib("mietixAutos",st);
   mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert, kommt auch in die Excel")}
+// Termine, Kilometerstand und Notiz nach dem Antippen: das Fenster passt sich an (Datum, Zahl oder Text)
 function zeichneAutos(){
   const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):[],stamm=lies("mietixAutos",{}),vorg=lies("mietixVorgaenge",[]),zust=lies("mietixZustand",[]),h=heute();
   Object.keys(stamm).forEach(n=>{if(namen.indexOf(n)<0)namen.push(n)});
@@ -142,14 +156,14 @@ function zeichneAutos(){
     const naechste=vorg.filter(v=>v.auto===n&&v.status!=="zurück"&&v.vonD>h).sort((x,y)=>x.vonD.localeCompare(y.vonD))[0];
     const punkte=zust.filter(z=>z.auto===n&&!z.erledigt),erl=zust.filter(z=>z.auto===n&&z.erledigt);
     return'<div class="karte auto" data-auto="'+n+'"><h3>'+n+'</h3><div class="kz">'+(a.kz||"")+(a.fin?"  |  FIN "+a.fin:"")+'</div>'+
-      '<div class="zeile"><span>Kilometerstand</span><b>'+(kmStand?km(kmStand):"<span class=grau>unbekannt</span>")+'</b></div>'+
+      '<div class="zeile tipp" data-feld="km" data-auto="'+n+'"><span>Kilometerstand</span><span class="wert">'+(kmStand?'<b>'+km(kmStand)+'</b>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>'+
       '<div class="zeile"><span>Gerade</span><b>'+(jetzt?'<span class="rot">unterwegs: '+jetzt.name+' bis '+de(jetzt.bisD)+'</span>':'<span class="gruen">frei</span>')+'</b></div>'+
       '<div class="zeile"><span>Nächste Miete</span><b>'+(naechste?naechste.name+", "+de(naechste.vonD):'<span class="grau">keine</span>')+'</b></div>'+
       termin("TÜV",a.tuev,"tuev",n)+termin("Service",a.service,"service",n)+termin("Reifen",a.reifen,"reifen",n)+
       // Garantie (30.10.2026, Baran): bis wann und über wen, aus dem Reiter Autos der Excel (garantie, garantieUeber)
       garantieZeile(a,n)+
       '<div class="zeile fs" data-fs="'+n+'"><span>Fahrzeugschein<i class="fsStand"></i></span><span class="fsKn"><button type="button" class="fsAuf">Öffnen</button><label class="fsHoch">Hochladen<input type="file" accept="image/*,application/pdf" hidden></label></span></div>'+
-      (a.notiz?'<div class="zeile"><span class="grau" style="font-size:12px">'+a.notiz+'</span></div>':'')+
+      '<div class="zeile tipp" data-feld="notiz" data-auto="'+n+'"><span>Notiz</span><span class="wert">'+(a.notiz?'<span class="grau" style="font-size:12px;max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block">'+a.notiz+'</span>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>'+
       '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'" data-seit="'+de(p.datum)+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
       (erl.length?'<div class="erl"><a href="#">'+erl.length+(erl.length===1?' erledigter Punkt':' erledigte Punkte')+', zeigen</a><div class="versteckt">'+erl.map(p=>'<div class="punkt alt" data-auf="'+p.id+'"><span class="box an"></span><span><span class="t">'+p.text+'</span><i>erledigt '+de(p.erledigtAm||p.datum)+', antippen = wiederherstellen</i></span></div>').join("")+'</div></div>':'')+
       '<div class="neu"><input placeholder="Neuer Punkt, z. B. Kratzer" data-neu="'+n+'"><button data-neuz="'+n+'">+</button></div></div>'}).join("")||'<div class="leer">Preisdatei wird geladen …</div>';
@@ -188,7 +202,9 @@ function zeichneTermine(){const l=termineListe();$("termineKarte").classList.tog
 function zeichneAufgaben(){const h=heute();zeichneTermine();
   const l=lies("mietixAufgaben",[]).filter(a=>!a.erledigt&&!a._weg&&a.aufgabe).sort((x,y)=>(x.bis||"9")+(x.seit||"")<(y.bis||"9")+(y.seit||"")?-1:1);
   $("aufgaben").innerHTML=l.length?l.map(a=>{const t=tageBis(a.bis);const wann=a.bis?(t<0?"überfällig seit "+de(a.bis):t===0?"heute":t===1?"morgen":"bis "+de(a.bis)):"";
-    return'<div class="punkt'+(t!==null&&t<=0?" heute":"")+'" data-a="'+a.id+'"><span class="box"></span><span><span class="t">'+a.aufgabe+'</span><i>'+[wann,a.status&&a.status!=="Offen"?a.status:"",a.betrag?a.betrag.toLocaleString("de-DE")+" €":"",a.tun].filter(Boolean).join("  |  ")+'</i></span></div>'}).join(""):'<div class="leer">Nichts offen. Die Aufgaben aus der Excel kommen automatisch hierher.</div>';
+    return'<div class="punkt'+(t!==null&&t<=0?" heute":"")+'" data-a="'+a.id+'"><span class="box"></span><span><span class="t">'+a.aufgabe+'</span><i>'+[wann,a.status&&a.status!=="Offen"?a.status:"",a.betrag?a.betrag.toLocaleString("de-DE")+" €":"",a.tun].filter(Boolean).join("  |  ")+'</i><span class="verschieb" data-bisa="'+a.id+'">'+(a.bis?"Datum ändern ›":"Datum setzen ›")+'</span></span></div>'}).join(""):'<div class="leer">Nichts offen. Die Aufgaben aus der Excel kommen automatisch hierher.</div>';
+  // Fälligkeit direkt verschieben (31.10.2026): eigenes Feld, der Haken für erledigt bleibt wie er ist
+  [...$("aufgaben").querySelectorAll("[data-bisa]")].forEach(k=>k.onclick=ev=>{ev.stopPropagation();aufgabeVerschieben(k.dataset.bisa)});
   [...$("aufgaben").querySelectorAll(".punkt[data-a]")].forEach(e=>e.onclick=()=>{if(!confirm("Erledigt?"))return;const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===e.dataset.a);if(a){a.erledigt=heute();schreib("mietixAufgaben",l);meldung("Erledigt, steht in 15 Minuten in der Excel");zeichneAufgaben()}})}
 [...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t});
 $("neuLos").onclick=()=>{const t=$("neuAufgabe").value.trim();if(!t)return;const d=new Date();if(NEU_BIS!==null)d.setDate(d.getDate()+NEU_BIS);
