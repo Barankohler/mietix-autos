@@ -155,7 +155,9 @@ function zeichneAutos(){
     const kms=vorg.filter(v=>v.auto===n).map(v=>zahl((v.rueck||{}).km)||zahl((v.ueb||{}).km)||zahl(v.km)||0);
     const kmStand=Math.max(zahl(a.km)||0,...kms);
     const jetzt=vorg.find(v=>v.auto===n&&v.status!=="zurück"&&v.vonD<=h&&v.bisD>=h);
-    const naechste=vorg.filter(v=>v.auto===n&&v.status!=="zurück"&&v.vonD>h).sort((x,y)=>x.vonD.localeCompare(y.vonD))[0];
+    // Nächste Miete: Mietverträge und gebuchte Anfragen ohne Mietvertrag (31.10.2026, Prüfbericht), ab heute, wenn das Auto noch nicht übergeben ist
+    const anfr=lies("mietixAnfragen",[]).filter(a=>a.status==="gebucht"&&a.auto===n&&a.von&&!a.vertrag&&a.von>=h).map(a=>({name:a.name||"Buchung",vonD:a.von}));
+    const naechste=vorg.filter(v=>v.auto===n&&v.status!=="zurück"&&!v.ueb&&v.vonD>=h).concat(anfr).sort((x,y)=>x.vonD.localeCompare(y.vonD))[0];
     const punkte=zust.filter(z=>z.auto===n&&!z.erledigt),erl=zust.filter(z=>z.auto===n&&z.erledigt);
     return'<div class="karte auto" data-auto="'+n+'"><h3>'+n+'</h3><div class="kz">'+(a.kz||"")+(a.fin?"  |  FIN "+a.fin:"")+'</div>'+
       '<div class="zeile tipp" data-feld="km" data-auto="'+n+'"><span>Kilometerstand</span><span class="wert">'+(kmStand?'<b>'+km(kmStand)+'</b>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>'+
