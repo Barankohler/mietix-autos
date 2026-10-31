@@ -23,6 +23,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
 .auto h3{font-size:18px;font-weight:900}
 .auto .kz{font-size:13px;color:var(--grau);font-weight:700;margin-bottom:8px}
 .zeile{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--rand);font-size:14px}
+.zeile>*{min-width:0;overflow-wrap:break-word}
 .fs{align-items:center}.fs i{display:block;font-style:normal;font-size:12px;color:#6F6F72}.fsKn{display:flex;gap:6px}
 .fsKn button,.fsKn label{border:1.5px solid var(--rand);background:#fff;border-radius:999px;padding:7px 12px;font:700 13px inherit;cursor:pointer}
 .fsKn button{background:#C4161C;border-color:#C4161C;color:#fff}.fsKn button[disabled]{opacity:.4}
@@ -41,6 +42,7 @@ main{max-width:680px;margin:0 auto;padding:16px}
 .punkt{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rand);cursor:pointer}
 .punkt:last-child{border-bottom:0}
 .punkt .box{width:24px;height:24px;border:2px solid var(--rand);border-radius:7px;flex:0 0 24px}
+.punkt>span:not(.box){min-width:0;overflow-wrap:anywhere}
 .punkt .t{font-size:15px;font-weight:700}.punkt i{display:block;font-style:normal;font-size:12px;color:var(--grau);font-weight:600}
 .punkt.heute .t{color:var(--rot)}
 .punkt.frag .box{border-color:var(--rot);background:#FDECEC}.punkt.frag i{color:var(--rot)}
@@ -167,7 +169,7 @@ function zeichneAutos(){
       // Garantie (30.10.2026, Baran): bis wann und über wen, aus dem Reiter Autos der Excel (garantie, garantieUeber)
       garantieZeile(a,n)+
       '<div class="zeile fs" data-fs="'+n+'"><span>Fahrzeugschein<i class="fsStand"></i></span><span class="fsKn"><button type="button" class="fsAuf">Öffnen</button><label class="fsHoch">Hochladen<input type="file" accept="image/*,application/pdf" hidden></label></span></div>'+
-      '<div class="zeile tipp" data-feld="notiz" data-auto="'+n+'"><span>Notiz</span><span class="wert">'+(a.notiz?'<span class="grau" style="font-size:12px;max-width:62vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block">'+a.notiz+'</span>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>'+
+      '<div class="zeile tipp" data-feld="notiz" data-auto="'+n+'"><span>Notiz</span><span class="wert" style="flex:1;min-width:0;justify-content:flex-end">'+(a.notiz?'<span class="grau" style="font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.notiz+'</span>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>'+
       '<h2 style="margin-top:12px">Zustand, offene Punkte</h2>'+(punkte.length?punkte.map(p=>'<div class="punkt" data-z="'+p.id+'" data-seit="'+de(p.datum)+'"><span class="box"></span><span><span class="t">'+p.text+'</span><i>seit '+de(p.datum)+', antippen = erledigt</i></span></div>').join(""):'<div class="leer">Nichts offen.</div>')+
       (erl.length?'<div class="erl"><a href="#">'+erl.length+(erl.length===1?' erledigter Punkt':' erledigte Punkte')+', zeigen</a><div class="versteckt">'+erl.map(p=>'<div class="punkt alt" data-auf="'+p.id+'"><span class="box an"></span><span><span class="t">'+p.text+'</span><i>erledigt '+de(p.erledigtAm||p.datum)+', antippen = wiederherstellen</i></span></div>').join("")+'</div></div>':'')+
       '<div class="neu"><input placeholder="Neuer Punkt" data-neu="'+n+'"><button data-neuz="'+n+'">+</button></div></div>'}).join("")||'<div class="leer">Preisdatei wird geladen …</div>';
@@ -212,7 +214,7 @@ function zeichneAufgaben(){const h=heute();zeichneTermine();
     return'<div class="punkt'+(t!==null&&t<=0?" heute":"")+'" data-a="'+a.id+'"><span class="box"></span><span><span class="t">'+a.aufgabe+'</span><i>'+[wann,a.status&&a.status!=="Offen"?a.status:"",a.betrag?a.betrag.toLocaleString("de-DE")+" €":"",a.tun].filter(Boolean).join("  |  ")+'</i><span class="verschieb" data-bisa="'+a.id+'">'+(a.bis?"Datum ändern ›":"Datum setzen ›")+'</span></span></div>'}).join(""):'<div class="leer">Nichts offen. Die Aufgaben aus der Excel kommen automatisch hierher.</div>';
   // Fälligkeit direkt verschieben (31.10.2026): eigenes Feld, der Haken für erledigt bleibt wie er ist
   [...$("aufgaben").querySelectorAll("[data-bisa]")].forEach(k=>k.onclick=ev=>{ev.stopPropagation();aufgabeVerschieben(k.dataset.bisa)});
-  [...$("aufgaben").querySelectorAll(".punkt[data-a]")].forEach(e=>e.onclick=()=>{if(!confirm("Erledigt?"))return;const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===e.dataset.a);if(a){a.erledigt=heute();schreib("mietixAufgaben",l);meldung("Erledigt, steht in 15 Minuten in der Excel");zeichneAufgaben()}})}
+  [...$("aufgaben").querySelectorAll(".punkt[data-a]")].forEach(e=>e.onclick=()=>{const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===e.dataset.a);if(!confirm("„"+((a&&a.aufgabe)||"Aufgabe")+"“ erledigt?\n\nSie verschwindet hier und wird in der Excel abgehakt."))return;if(a){a.erledigt=heute();schreib("mietixAufgaben",l);meldung("Erledigt, steht in 15 Minuten in der Excel");zeichneAufgaben()}})}
 [...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t;
   // gewähltes Datum direkt anzeigen (Baran, 31.10.2026: „morgen“ immer mit Datum)
   let z=$("neuBisDatum");if(!z){z=document.createElement("div");z.id="neuBisDatum";z.style.cssText="margin-top:6px;font-size:13px;font-weight:700;color:#6F6F72";$("neuBis").after(z)}
@@ -266,7 +268,7 @@ function fsKnoepfe(){document.querySelectorAll(".fs").forEach(z=>{const n=z.data
 zeichneAutos();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){zeichneAutos();zeichneAufgaben()}});
 </script>
-<script>$("tOk").onclick=()=>terminSpeichern(false);$("tWeg").onclick=()=>{if(confirm("Eintrag wirklich löschen?"))terminSpeichern(true)};$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.onclick=()=>{$("tUeber").value=c.dataset.ue});</script><script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
+<script>$("tOk").onclick=()=>terminSpeichern(false);$("tWeg").onclick=()=>{if(confirm((TNAME[T_FELD]||"Eintrag")+" bei "+T_AUTO+" löschen?"))terminSpeichern(true)};$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.onclick=()=>{$("tUeber").value=c.dataset.ue});</script><script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
    Wird von tools/vertrag/build_html.py und tools/anfragen/build_html.py in die Seite eingebaut.
    - Die Werkzeuge arbeiten weiter nur mit localStorage. Dieser Baustein merkt jede Änderung an den vier Speichern,
      schickt sie hoch und holt neue Stände der anderen Geräte (beim Start, beim Zurückkehren zur Seite, jede Minute).
