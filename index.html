@@ -201,12 +201,15 @@ function zeichneTermine(){const l=termineListe();$("termineKarte").classList.tog
   $("termine").innerHTML=l.map(x=>'<div class="punkt'+(x.tage<=7?" heute":"")+'" style="cursor:default"><span><span class="t">'+x.was+" "+x.auto+'</span><i>'+(x.tage<0?"überfällig seit "+de(x.datum):x.tage===0?"heute":"in "+x.tage+" Tagen, "+de(x.datum))+'</i></span></div>').join("")}
 function zeichneAufgaben(){const h=heute();zeichneTermine();
   const l=lies("mietixAufgaben",[]).filter(a=>!a.erledigt&&!a._weg&&a.aufgabe).sort((x,y)=>(x.bis||"9")+(x.seit||"")<(y.bis||"9")+(y.seit||"")?-1:1);
-  $("aufgaben").innerHTML=l.length?l.map(a=>{const t=tageBis(a.bis);const wann=a.bis?(t<0?"überfällig seit "+de(a.bis):t===0?"heute":t===1?"morgen":"bis "+de(a.bis)):"";
+  $("aufgaben").innerHTML=l.length?l.map(a=>{const t=tageBis(a.bis);const wann=a.bis?(t<0?"überfällig seit "+de(a.bis):t===0?"heute":t===1?"morgen, "+de(a.bis):"bis "+de(a.bis)):"";
     return'<div class="punkt'+(t!==null&&t<=0?" heute":"")+'" data-a="'+a.id+'"><span class="box"></span><span><span class="t">'+a.aufgabe+'</span><i>'+[wann,a.status&&a.status!=="Offen"?a.status:"",a.betrag?a.betrag.toLocaleString("de-DE")+" €":"",a.tun].filter(Boolean).join("  |  ")+'</i><span class="verschieb" data-bisa="'+a.id+'">'+(a.bis?"Datum ändern ›":"Datum setzen ›")+'</span></span></div>'}).join(""):'<div class="leer">Nichts offen. Die Aufgaben aus der Excel kommen automatisch hierher.</div>';
   // Fälligkeit direkt verschieben (31.10.2026): eigenes Feld, der Haken für erledigt bleibt wie er ist
   [...$("aufgaben").querySelectorAll("[data-bisa]")].forEach(k=>k.onclick=ev=>{ev.stopPropagation();aufgabeVerschieben(k.dataset.bisa)});
   [...$("aufgaben").querySelectorAll(".punkt[data-a]")].forEach(e=>e.onclick=()=>{if(!confirm("Erledigt?"))return;const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===e.dataset.a);if(a){a.erledigt=heute();schreib("mietixAufgaben",l);meldung("Erledigt, steht in 15 Minuten in der Excel");zeichneAufgaben()}})}
-[...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t});
+[...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t;
+  // gewähltes Datum direkt anzeigen (Baran, 31.10.2026: „morgen“ immer mit Datum)
+  let z=$("neuBisDatum");if(!z){z=document.createElement("div");z.id="neuBisDatum";z.style.cssText="margin-top:6px;font-size:13px;font-weight:700;color:#6F6F72";$("neuBis").after(z)}
+  if(NEU_BIS===null)z.textContent="Ohne Fälligkeit";else{const d=new Date();d.setDate(d.getDate()+NEU_BIS);z.textContent="Fällig am "+["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][d.getDay()]+", "+de(iso(d))}});
 $("neuLos").onclick=()=>{const t=$("neuAufgabe").value.trim();if(!t)return;const d=new Date();if(NEU_BIS!==null)d.setDate(d.getDate()+NEU_BIS);
   const l=lies("mietixAufgaben",[]);l.push({id:"h"+String(Date.now())+Math.random().toString(36).slice(2,6),aufgabe:t,status:"Offen",bis:NEU_BIS===null?"":iso(d),seit:heute(),quelle:"handy"});
   schreib("mietixAufgaben",l);$("neuAufgabe").value="";meldung("Aufgabe angelegt");zeichneAufgaben()};
