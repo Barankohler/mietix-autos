@@ -180,7 +180,7 @@ function zeichneAutos(){
   [...$("autos").querySelectorAll(".erl a")].forEach(a=>a.onclick=ev=>{ev.preventDefault();a.nextElementSibling.classList.toggle("versteckt")});
   [...$("autos").querySelectorAll(".punkt[data-auf]")].forEach(e=>e.onclick=()=>{const l=lies("mietixZustand",[]),z=l.find(x=>x.id===e.dataset.auf);
     if(z){z.erledigt=false;delete z.erledigtAm;schreib("mietixZustand",l);meldung("Wiederhergestellt");zeichneAutos()}});
-  [...$("autos").querySelectorAll("button[data-neuz]")].forEach(b=>b.onclick=()=>{const inp=$("autos").querySelector('input[data-neu="'+b.dataset.neuz+'"]'),t=inp.value.trim();if(!t)return;
+  [...$("autos").querySelectorAll("button[data-neuz]")].forEach(b=>b.onclick=()=>{const inp=$("autos").querySelector('input[data-neu="'+b.dataset.neuz+'"]'),t=inp.value.trim();if(!t){inp.focus();meldung("Erst den Punkt eintippen, dann +");return}
     const l=lies("mietixZustand",[]);l.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),auto:b.dataset.neuz,text:t,erledigt:false,datum:heute()});schreib("mietixZustand",l);zeichneAutos()});
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
 
@@ -249,7 +249,8 @@ function fsZeigen(){document.querySelectorAll(".fs").forEach(z=>{const n=z.datas
 async function fsLaden(){if(!lies("mietixSitzung",null))return;const namen=[...document.querySelectorAll(".fs")].map(z=>z.dataset.fs);
   for(const n of namen){if(FS[n]!==undefined)continue;try{FS[n]=await fsNeuester(n)}catch(e){return}}fsZeigen()}
 function fsKnoepfe(){document.querySelectorAll(".fs").forEach(z=>{const n=z.dataset.fs;
-  z.querySelector(".fsAuf").onclick=async()=>{const w=window.open("","_blank");
+  z.querySelector(".fsAuf").onclick=async()=>{if(!lies("mietixSitzung",null)){alert("Bitte erst anmelden.");return}   // sonst blitzt ein leerer Tab auf (Prüfung 31.10.2026)
+    const w=window.open("","_blank");
     try{const datei=FS[n]||await fsNeuester(n);if(!datei){if(w)w.close();meldung("Noch kein Fahrzeugschein hinterlegt");return}
       const j=await fsHole("/object/sign/fahrzeugscheine/"+fsOrdner(n)+"/"+encodeURIComponent(datei),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({expiresIn:600})});
       const url=FS_URL+(j.signedURL||j.signedUrl);if(w)w.location=url;else location.href=url}
@@ -426,7 +427,7 @@ function rueckZeigen(text){let el=document.getElementById("mietixRueck");
   const andere=()=>{try{return[...document.querySelectorAll("#meldung,#zMeld,#erfolgBox.auf,.bMeld,.meld.an,#meld.an")].some(m=>m.offsetParent!==null&&getComputedStyle(m).display!=="none"&&getComputedStyle(m).opacity!=="0")}catch(e){return false}};
   let n=0;const los=()=>{if(andere()&&n++<20){rueckTimer=setTimeout(los,200);return}el.classList.add("an");rueckTimer=setTimeout(()=>el.classList.remove("an"),6000)};los()}
 function rueckgaengig(){if(!burst)return;
-  if("mietixVorgaenge" in burst&&!confirm("Die letzte Änderung am Mietvertrag wird zurückgenommen (zum Beispiel das Speichern). Was im Formular steht, bleibt stehen. Weiter?"))return;
+  if("mietixVorgaenge" in burst&&!confirm("Die letzte Änderung am Mietvertrag wird zurückgenommen. Was gerade in einem offenen Formular steht, bleibt dort stehen. Weiter?"))return;
   const b=burst;burst=null;rueckLaeuft=true;
   try{Object.keys(b).forEach(k=>{if(b[k]===null)localStorage.removeItem(k);else roh.call(localStorage,k,b[k])})}finally{rueckLaeuft=false}
   const el=document.getElementById("mietixRueck");if(el){el.querySelector("span").textContent="Zurückgeholt.";clearTimeout(rueckTimer);rueckTimer=setTimeout(()=>el.classList.remove("an"),1500)}
