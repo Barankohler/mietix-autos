@@ -337,7 +337,7 @@ function terminSpeichern(loeschen){
 // Liste und Detailansicht (01.11.2026, Baran): eine Zeile pro Auto, antippen öffnet alle Felder dieses Autos
 let AUTO_OFFEN="",AUTO_WUNSCH=new URLSearchParams(location.search).get("auto")||"",LISTE_Y=0;
 const kurz=s=>s?de(s).slice(0,6):"";
-const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["frei","Frei"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});
+const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["frei","Frei"],["gebucht","Gebucht"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});
 const NEU_PUNKT=(()=>{try{return JSON.parse(localStorage.getItem("mietixFeld:zustandPunkt")||"{}")||{}}catch(e){return{}}})();   // Getipptes bleibt, wenn der Abgleich die Seite neu zeichnet (04.11.2026), auch beim Neuladen (05.11.2026)
 const neuPunktMerken=()=>{try{if(Object.keys(NEU_PUNKT).some(k=>NEU_PUNKT[k]))localStorage.setItem("mietixFeld:zustandPunkt",JSON.stringify(NEU_PUNKT));else localStorage.removeItem("mietixFeld:zustandPunkt")}catch(e){}};
 const isoHeute=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
@@ -366,9 +366,13 @@ function autoInfo(n,stamm,vorg,zust,h){const a=stamm[n]||{};
   const achtung=[];[["tuev","TÜV"],["service","Service"],["reifen","Reifen"],["garantie","Garantie"]].forEach(([k,t])=>{const d=tageBis(a[k]);if(d===null||d>30)return;
     achtung.push(t+(d<0?(k==="garantie"?" abgelaufen":" überfällig"):" "+tagWort(d,a[k])))});
   if(punkte.length)achtung.push(punkte.length+(punkte.length===1?" offener Punkt":" offene Punkte"));
-  return{a,kmStand,jetzt,naechste,punkte,erl,achtung,sperre}}
+  // Mietvertrag im Zeitraum, aber noch keine Übergabe (Prüfung 06.11.2026, Runde 2): gebucht, nicht unterwegs
+  const ohneUeb=!!(jetzt&&!jetzt.ohneVertrag&&!jetzt.ueb&&jetzt.status!=="unterwegs");
+  return{a,kmStand,jetzt,naechste,punkte,erl,achtung,sperre,ohneUeb}}
+const uebWann=v=>(v.vonD===isoHeute()?"Übergabe heute":"Übergabe fehlt, ab "+kurz(v.vonD))+(v.vonU?" "+v.vonU:"");
 function autoZeile(n,i){const kz=i.a.kz||"";let schild,text;
   if(i.jetzt&&i.jetzt.ohneVertrag){schild='<span class="schild sr">gebucht</span>';text=i.jetzt.name+" bis "+kurz(i.jetzt.bisD)+", Mietvertrag fehlt"}
+  else if(i.jetzt&&i.ohneUeb){schild='<span class="schild sr">gebucht</span>';text=i.jetzt.name+", "+uebWann(i.jetzt)}
   else if(i.jetzt){const ueber=i.jetzt.bisD<isoHeute();schild='<span class="schild sr">'+(ueber?"überfällig":"unterwegs")+'</span>';text=i.jetzt.name+(ueber?" seit ":" bis ")+kurz(i.jetzt.bisD)}
   else if(i.sperre){schild='<span class="schild sr">gesperrt</span>';text=(i.sperre.grund?i.sperre.grund+", ":"")+kurz(i.sperre.von)+" bis "+kurz(i.sperre.bis);if(i.achtung.length)text+=", "+i.achtung[0]}
   else if(i.achtung.length){schild='<span class="schild sy">Achtung</span>';text=i.achtung.join(", ")}
@@ -391,7 +395,7 @@ function zeichneAutos(){
   const kn=document.querySelector(".mxKnopf[data-fenster=fWer]");if(kn)kn.classList.toggle("versteckt",!!AUTO_OFFEN);
   if(!AUTO_OFFEN){
     // Listenkopf (04.11.2026): suchen nach Name und Kennzeichen, filtern nach Stand
-    AUTO_LK.bauen();$("autoLK").classList.remove("versteckt");const sInfo=namen.map(n=>[n,autoInfo(n,stamm,vorg,zust,h)]),sStand=i=>i.jetzt?(i.jetzt.bisD<h?"ueber":"unterwegs"):i.sperre?"gesperrt":i.achtung.length?"achtung":"frei";
+    AUTO_LK.bauen();$("autoLK").classList.remove("versteckt");const sInfo=namen.map(n=>[n,autoInfo(n,stamm,vorg,zust,h)]),sStand=i=>i.jetzt?(i.jetzt.ohneVertrag||i.ohneUeb?"gebucht":i.jetzt.bisD<h?"ueber":"unterwegs"):i.sperre?"gesperrt":i.achtung.length?"achtung":"frei";
     const sTreffer=sInfo.filter(([n,i])=>(!AUTO_LK.w.stand||sStand(i)===AUTO_LK.w.stand)&&AUTO_LK.passt(n+" "+(i.a.kz||"")));
     AUTO_LK.zeile(namen.length?(AUTO_LK.aktiv()?sTreffer.length+" von "+namen.length+" Autos":namen.length+(namen.length===1?" Auto":" Autos")):"");
     $("autos").innerHTML=namen.length?(sTreffer.length?'<div class="aListe">'+sTreffer.map(([n,i])=>autoZeile(n,i)).join("")+'</div>':'<div class="leer">Nichts gefunden. Andere Suche oder Filter zurücksetzen.</div>'):'<div class="leer">Preisdatei wird geladen …</div>';
@@ -399,7 +403,7 @@ function zeichneAutos(){
   $("autoLK").classList.add("versteckt");
   $("autos").innerHTML='<button type="button" class="zurueckA" id="autoZurueck"><b>‹</b>Autos</button>'+[AUTO_OFFEN].map(n=>{const i=autoInfo(n,stamm,vorg,zust,h),a=i.a,kmStand=i.kmStand,jetzt=i.jetzt,naechste=i.naechste,punkte=i.punkte,erl=i.erl;
     // Gerade und Nächste Miete öffnen die Mappe des Mietvertrags, wenn es einen mit Nummer gibt
-    const gerade=jetzt?'<span class="rot">'+String(jetzt.ohneVertrag?"gebucht: "+jetzt.name+" bis "+de(jetzt.bisD)+", Mietvertrag fehlt noch":jetzt.bisD<h?"überfällig: "+jetzt.name+" sollte am "+de(jetzt.bisD)+" zurück sein":"unterwegs: "+jetzt.name+" bis "+de(jetzt.bisD)).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span>':i.sperre?'<span class="rot">'+esc("selbst gesperrt"+(i.sperre.grund?": "+i.sperre.grund:"")+", "+de(i.sperre.von)+" bis "+de(i.sperre.bis))+'</span>':'<span class="gruen">frei</span>';
+    const gerade=jetzt?'<span class="rot">'+String(jetzt.ohneVertrag?"gebucht: "+jetzt.name+" bis "+de(jetzt.bisD)+", Mietvertrag fehlt noch":i.ohneUeb?"gebucht: "+jetzt.name+" bis "+de(jetzt.bisD)+", "+uebWann(jetzt):jetzt.bisD<h?"überfällig: "+jetzt.name+" sollte am "+de(jetzt.bisD)+" zurück sein":"unterwegs: "+jetzt.name+" bis "+de(jetzt.bisD)).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span>':i.sperre?'<span class="rot">'+esc("selbst gesperrt"+(i.sperre.grund?": "+i.sperre.grund:"")+", "+de(i.sperre.von)+" bis "+de(i.sperre.bis))+'</span>':'<span class="gruen">frei</span>';
     const naechT=naechste?String(naechste.name).replace(/&/g,"&amp;").replace(/</g,"&lt;")+", "+de(naechste.vonD):'<span class="grau">keine</span>';
     const verl=(nr,titel,inhalt,bu)=>bu&&!nr?'<a class="zeile mappe" href="'+BUCHUNG(bu)+'"><span>'+titel+'</span><span class="wert"><b>'+inhalt+'</b><span class="pf">›</span></span></a>':nr?'<a class="zeile mappe" href="'+MAPPE(nr)+'"><span>'+titel+'</span><span class="wert"><b>'+inhalt+'</b><span class="pf">›</span></span></a>':'<div class="zeile"><span>'+titel+'</span><b>'+inhalt+'</b></div>';
     return'<div class="karte auto" data-auto="'+esc(n)+'"><h3>'+esc(n)+'</h3><div class="kz">'+esc((a.kz||"")+(a.fin?"  |  FIN "+a.fin:""))+'</div>'+
@@ -1078,8 +1082,8 @@ zeigen();abgleichen();auslagernBald();
     "html body header .mxStart,html body .topbar .mxStart{float:none!important;margin:0 10px 0 0!important;border:0!important;padding:5px 12px 5px 9px!important;background:#E9E9EE!important;border-radius:10px!important;color:#C4161C!important;opacity:1!important;font-size:16px!important;font-weight:600!important;gap:3px!important;line-height:1.2!important;min-height:44px!important;box-sizing:border-box;display:inline-flex!important;align-items:center!important}html body .mxStart b{font-size:20px!important;font-weight:400!important;line-height:16px!important;margin-top:-2px!important}"+
     /* PC und Mac (1.11.2026, Baran: auf allen Geräten gleich): Kopfzeile und Inhalt in einer 680-px-Spalte in der Mitte.
        Muss ganz am Ende stehen: header{padding-left:16px!important} weiter oben (und look.py davor im head) würde sonst gewinnen */
-    (istStart||art==="kalender"||art==="schaeden"?"":"@media(min-width:760px){header,.topbar{padding-left:max(16px,calc((100% - 680px)/2))!important;padding-right:max(16px,calc((100% - 680px)/2))!important}"+
-      "main{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding-left:16px!important;padding-right:16px!important}header .plus{right:max(16px,calc((100% - 680px)/2))!important}}");
+    (istStart||art==="kalender"||art==="schaeden"?"":"@media(min-width:760px){header,.topbar{padding-left:max(16px,calc((100% - 680px)/2 + 16px))!important;padding-right:max(16px,calc((100% - 680px)/2 + 16px))!important}"+
+      "main{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding-left:16px!important;padding-right:16px!important}header .plus{right:max(16px,calc((100% - 680px)/2 + 16px))!important}}");
   document.head.appendChild(st);
 
   // ‹ Start und Symbol in der Kopfzeile
