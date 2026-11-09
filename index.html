@@ -166,6 +166,9 @@ html body header .mxStart,html body .topbar .mxStart,html body .kTop #kZu{min-he
   main,.app{max-width:680px!important;margin-left:auto!important;margin-right:auto!important}header .plus{right:max(16px,calc((100% - 680px)/2))!important}}
 #sortierung{font-size:16px!important}   /* sonst zoomt das iPhone beim Antippen */
 input[type=date],input[type=time]{min-width:0;max-width:100%}
+
+/* Überschriften sofort erkennbar (09.11.2026, Baran: „dicker geschrieben, dann erkennt man sie direkt“): nur Gruppenüberschriften, keine Feld-Etiketten */
+html body .buGk,html body .alK,html body .uGk,html body h2.hT,html body #s_unterwegs h2.hT,html body p.feldname,html body main h2.gruppe,html body .gruppe,html body .app>h2,html body main>h2,html body h2.thema,html body .bereich>.kopf>b,html body .ab,html body main .karte>h2,html body .karte>h2,html body .kGruppe,html body .abschnitt,html body .mxZa .fk,html body .gk,html body .lbl,html body .anbLbl,html body .waGr .waGk:first-child{font-size:15px!important;font-weight:800!important;color:#1C1C1E!important;letter-spacing:.2px!important}
 </style><style>
 /* Listenkopf (04.11.2026) */
 .lkKopf{margin:12px 0 10px}.lkSuche{display:flex;align-items:center;gap:8px;background:#E4E4E9;border-radius:12px;padding:0 12px;height:44px;box-sizing:border-box}
@@ -339,7 +342,7 @@ const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const de=s=>s?String(s).slice(0,10).split("-").reverse().join("."):"";
 const zahl=v=>{if(v===null||v===undefined)return null;const s=String(v).trim();if(!s)return null;const n=parseFloat(s.indexOf(",")>=0?s.replace(/\./g,"").replace(",","."):s.replace(/\.(?=\d{3}(\D|$))/g,""));return isNaN(n)?null:n};
 const km=n=>n?Math.round(n).toLocaleString("de-DE")+" km":"";
-function meldung(t){const m=$("meldung");m.textContent=t;m.style.display="block";setTimeout(()=>m.style.display="none",2200)}
+function meldung(t,rot){const m=$("meldung");m.textContent=t;m.style.background=rot?"var(--rot)":"";m.style.display="block";setTimeout(()=>m.style.display="none",2200)}
 let D=null,SICHT="autos",NEU_BIS=null;
 const heute=()=>iso(new Date());
 const tageBis=s=>s?Math.round((new Date(s+"T12:00")-new Date(heute()+"T12:00"))/86400000):null;
@@ -366,24 +369,25 @@ function terminAuf(auto,feld){T_AUFG="";T_AUTO=auto;T_FELD=feld;const a=lies("mi
   $("fTermin").querySelector("h3").textContent=TNAME[feld]+" eintragen";$("tAuto").textContent=auto;
   const art=feld==="km"?"zahl":feld==="notiz"?"text":"datum";$("fTermin").dataset.art=art;
   $("tLab").textContent=feld==="garantie"?"Garantie gilt bis":feld==="km"?"Kilometerstand jetzt":feld==="notiz"?"Notiz zum Auto":TNAME[feld]+" fällig am";
-  $("tDatum").value=art==="datum"?(a[feld]||""):"";$("tZahl").value=art==="zahl"?(a.km?String(Math.round(zahl(a.km))):""):"";$("tText").value=art==="text"?(a.notiz||""):"";
+  $("tDatum").value=art==="datum"?(a[feld]||""):"";$("tZahl").value="";if(art==="zahl"){const st=autoInfo(auto,lies("mietixAutos",{}),lies("mietixVorgaenge",[]),lies("mietixZustand",[]),heute()).kmStand;$("tZahl").value=st?String(Math.round(st)):""}$("tText").value=art==="text"?(a.notiz||""):"";
   ["tDatum","tZahl","tText"].forEach(i=>$(i).classList.toggle("versteckt",i!==(art==="zahl"?"tZahl":art==="text"?"tText":"tDatum")));
   $("tLab").htmlFor=art==="zahl"?"tZahl":art==="text"?"tText":"tDatum";
   $("tUeberW").classList.toggle("versteckt",feld!=="garantie");$("tUeber").value=a.garantieUeber||"";
   $("tWeg").classList.toggle("versteckt",!a[feld]&&!(feld==="garantie"&&a.garantieUeber));mxAuf("fTermin")}
 function terminSpeichern(loeschen){
-  if(T_AUFG){const d=$("tDatum").value;if(!d){meldung("Bitte ein Datum wählen");return}const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===T_AUFG);
+  if(T_AUFG){const d=$("tDatum").value;if(!d){meldung("Bitte ein Datum wählen",true);return}const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===T_AUFG);
     if(a){a.bis=d;a.bisNeu={bis:d,am:new Date().toISOString()};schreib("mietixAufgaben",l)}T_AUFG="";mxZu();zeichneAufgaben();meldung("✓ Verschoben auf "+de(d)+", kommt auch in die Excel");return}
   const st=lies("mietixAutos",{}),a=Object.assign({},st[T_AUTO]||{}),neu={};
-  const art=$("fTermin").dataset.art;neu[T_FELD]=loeschen?"":art==="zahl"?String(zahl($("tZahl").value)||""):art==="text"?$("tText").value.trim():$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
-  if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){meldung(art==="zahl"?"Bitte den Kilometerstand eintragen":art==="text"?"Bitte etwas eintragen":"Bitte ein Datum wählen");return}
+  const art=$("fTermin").dataset.art;neu[T_FELD]=loeschen?"":art==="zahl"?String(Math.max(zahl($("tZahl").value)||0,0)||""):art==="text"?$("tText").value.trim():$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
+  if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){meldung(art==="zahl"?"Bitte den Kilometerstand eintragen":art==="text"?"Bitte etwas eintragen":"Bitte ein Datum wählen",true);return}
   Object.assign(a,neu);a.handy=Object.assign({},a.handy||{},neu,{am:new Date().toISOString()});st[T_AUTO]=a;schreib("mietixAutos",st);
   mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert, kommt auch in die Excel")}
 // Termine, Kilometerstand und Notiz nach dem Antippen: das Fenster passt sich an (Datum, Zahl oder Text)
 // Liste und Detailansicht (01.11.2026, Baran): eine Zeile pro Auto, antippen öffnet alle Felder dieses Autos
 let AUTO_OFFEN="",AUTO_WUNSCH=new URLSearchParams(location.search).get("auto")||"",LISTE_Y=0;
 const kurz=s=>s?de(s).slice(0,6):"";
-const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["frei","Frei"],["gebucht","Gebucht"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});
+const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["istfrei","Frei"],["gebucht","Gebucht"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});
+if(AUTO_LK.w.stand==="frei")AUTO_LK.w.stand="istfrei";   // Nachtprüfung 09.11.2026: „frei“ hält der Listenkopf für einen eigenen Zeitraum („bis NaN.NaN.“), alter gemerkter Filter zieht mit
 const NEU_PUNKT=(()=>{try{return JSON.parse(localStorage.getItem("mietixFeld:zustandPunkt")||"{}")||{}}catch(e){return{}}})();   // Getipptes bleibt, wenn der Abgleich die Seite neu zeichnet (04.11.2026), auch beim Neuladen (05.11.2026)
 const neuPunktMerken=()=>{try{if(Object.keys(NEU_PUNKT).some(k=>NEU_PUNKT[k]))localStorage.setItem("mietixFeld:zustandPunkt",JSON.stringify(NEU_PUNKT));else localStorage.removeItem("mietixFeld:zustandPunkt")}catch(e){}};
 const isoHeute=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
@@ -413,7 +417,7 @@ function autoInfo(n,stamm,vorg,zust,h){const a=stamm[n]||{};
     achtung.push(t+(d<0?(k==="garantie"?" abgelaufen":" überfällig"):" "+tagWort(d,a[k])))});
   if(punkte.length)achtung.push(punkte.length+(punkte.length===1?" offener Punkt":" offene Punkte"));
   // Mietvertrag im Zeitraum, aber noch keine Übergabe (Prüfung 06.11.2026, Runde 2): gebucht, nicht unterwegs
-  const ohneUeb=!!(jetzt&&!jetzt.ohneVertrag&&!jetzt.ueb&&jetzt.status!=="unterwegs");
+  const ohneUeb=!!(jetzt&&!jetzt.ohneVertrag&&!jetzt.ueb);   // Nachtprüfung 09.11.2026: vertrag speichert von Anfang an status „unterwegs“, übergeben ist nur, wer v.ueb hat
   return{a,kmStand,jetzt,naechste,punkte,erl,achtung,sperre,ohneUeb}}
 const uebWann=v=>(v.vonD===isoHeute()?"Übergabe heute":"Übergabe fehlt, ab "+kurz(v.vonD))+(v.vonU?" "+v.vonU:"");
 function autoZeile(n,i){const kz=i.a.kz||"";let schild,text;
@@ -426,7 +430,7 @@ function autoZeile(n,i){const kz=i.a.kz||"";let schild,text;
   return'<div class="aZeile" data-oeffne="'+esc(n)+'" role="button"><span class="aText"><b>'+esc(n)+'</b><i>'+String((kz?kz+", ":"")+text).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</i></span>'+schild+'<span class="aPf">›</span></div>'}
 function autoAuf(n){LISTE_Y=scrollY;AUTO_OFFEN=n;try{history.pushState({mxAuto:n},"")}catch(e){}zeichneAutos();scrollTo(0,0)}
 function autoZu(){if(!AUTO_OFFEN)return false;
-  if(history.state&&history.state.mxAuto){history.back();return true}
+  if(history.state&&history.state.mxAuto&&!history.state.mxDirekt){history.back();return true}
   AUTO_OFFEN="";const u=new URL(location.href);if(u.searchParams.has("auto")){u.searchParams.delete("auto");try{history.replaceState(null,"",u.pathname+u.search+u.hash)}catch(e){}}
   zeichneAutos();scrollTo(0,LISTE_Y);return true}
 window.mxZurueck=function(){return SICHT==="autos"&&autoZu()};   // app.py: Wischen vom Rand schließt erst die Detailansicht
@@ -435,12 +439,12 @@ function zeichneAutos(){
   const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):[],stamm=lies("mietixAutos",{}),vorg=lies("mietixVorgaenge",[]),zust=lies("mietixZustand",[]),h=heute();
   Object.keys(stamm).forEach(n=>{if(namen.indexOf(n)<0)namen.push(n)});
   // Direktaufruf ?auto=Modell (ohne Groß/Klein), wartet bis die Namen da sind
-  if(AUTO_WUNSCH){const w=AUTO_WUNSCH.trim().toLowerCase(),t=namen.find(n=>n.toLowerCase()===w);if(t){AUTO_OFFEN=t;AUTO_WUNSCH=""}}
+  if(AUTO_WUNSCH){const w=AUTO_WUNSCH.trim().toLowerCase(),t=namen.find(n=>n.toLowerCase()===w);if(t){AUTO_OFFEN=t;AUTO_WUNSCH="";try{history.replaceState(Object.assign({},history.state||{},{mxAuto:t,mxDirekt:1}),"")}catch(e){}}}   // Nachtprüfung 09.11.2026: sonst schließt jedes Fenster die Karte
   if(AUTO_OFFEN&&namen.indexOf(AUTO_OFFEN)<0&&namen.length)AUTO_OFFEN="";
   const kn=document.querySelector(".mxKnopf[data-fenster=fWer]");if(kn)kn.classList.toggle("versteckt",!!AUTO_OFFEN);
   if(!AUTO_OFFEN){
     // Listenkopf (04.11.2026): suchen nach Name und Kennzeichen, filtern nach Stand
-    AUTO_LK.bauen();$("autoLK").classList.remove("versteckt");const sInfo=namen.map(n=>[n,autoInfo(n,stamm,vorg,zust,h)]),sStand=i=>i.jetzt?(i.jetzt.ohneVertrag||i.ohneUeb?"gebucht":i.jetzt.bisD<h?"ueber":"unterwegs"):i.sperre?"gesperrt":"frei",sPasst=(i,w)=>!w||(w==="achtung"?i.achtung.length>0:sStand(i)===w);   // Achtung steht zusätzlich zum Stand (09.11.2026)
+    AUTO_LK.bauen();$("autoLK").classList.remove("versteckt");const sInfo=namen.map(n=>[n,autoInfo(n,stamm,vorg,zust,h)]),sStand=i=>i.jetzt?(i.jetzt.ohneVertrag||i.ohneUeb?"gebucht":i.jetzt.bisD<h?"ueber":"unterwegs"):i.sperre?"gesperrt":"istfrei",sPasst=(i,w)=>!w||(w==="achtung"?i.achtung.length>0:sStand(i)===w);   // Achtung steht zusätzlich zum Stand (09.11.2026)
     const sTreffer=sInfo.filter(([n,i])=>sPasst(i,AUTO_LK.w.stand)&&AUTO_LK.passt(n+" "+(i.a.kz||"")));
     AUTO_LK.zeile(namen.length?(AUTO_LK.aktiv()?sTreffer.length+" von "+namen.length+" Autos":namen.length+(namen.length===1?" Auto":" Autos")):"");
     $("autos").innerHTML=namen.length?(sTreffer.length?'<div class="aListe">'+sTreffer.map(([n,i])=>autoZeile(n,i)).join("")+'</div>':'<div class="leer">Nichts gefunden. Andere Suche oder Filter zurücksetzen.</div>'):'<div class="leer">Preisdatei wird geladen …</div>';
@@ -474,7 +478,7 @@ function zeichneAutos(){
   [...$("autos").querySelectorAll(".erl a")].forEach(a=>a.onclick=ev=>{ev.preventDefault();a.nextElementSibling.classList.toggle("versteckt")});
   [...$("autos").querySelectorAll(".punkt[data-auf]")].forEach(e=>e.onclick=()=>{const l=lies("mietixZustand",[]),z=l.find(x=>x.id===e.dataset.auf);
     if(z){z.erledigt=false;delete z.erledigtAm;schreib("mietixZustand",l);meldung("Wiederhergestellt");zeichneAutos()}});
-  [...$("autos").querySelectorAll("button[data-neuz]")].forEach(b=>b.onclick=()=>{const inp=$("autos").querySelector('input[data-neu="'+b.dataset.neuz+'"]'),t=inp.value.trim();if(!t){inp.focus();meldung("Erst den Punkt eintippen, dann +");return}delete NEU_PUNKT[b.dataset.neuz];neuPunktMerken();
+  [...$("autos").querySelectorAll("button[data-neuz]")].forEach(b=>b.onclick=()=>{const inp=$("autos").querySelector('input[data-neu="'+b.dataset.neuz+'"]'),t=inp.value.trim();if(!t){inp.focus();meldung("Erst den Punkt eintippen, dann +",true);return}delete NEU_PUNKT[b.dataset.neuz];neuPunktMerken();
     const l=lies("mietixZustand",[]);l.push({id:String(Date.now())+Math.random().toString(36).slice(2,6),auto:b.dataset.neuz,text:t,erledigt:false,datum:heute()});schreib("mietixZustand",l);zeichneAutos()});
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("input",()=>{NEU_PUNKT[i.dataset.neu]=i.value;neuPunktMerken()}));
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
@@ -482,16 +486,19 @@ function zeichneAutos(){
 /* ---------- Wer fuhr wann: Mieter zum Datum, Angaben für die Fahrerbenennung kopieren ---------- */
 function wfFuellen(){const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):Object.keys(lies("mietixAutos",{}));const alt=$("wfAuto").value;
   $("wfAuto").innerHTML='<option value="">Auto</option>'+namen.map(n=>'<option>'+n+'</option>').join("");if(alt)$("wfAuto").value=alt}
+// Nachtprüfung 09.11.2026: Mieter gilt bis zur tatsächlichen Rückgabe; übergeben und noch nicht zurück: bis heute. Früh zurück ändert nichts (Mietzeit bleibt).
+function wfEnde(v){const ende=v.bisD+" "+(v.bisU||"23:59"),r=v.rueck||{},spaet=v.status==="zurück"?(r.datum?r.datum+" "+(r.uhr||"23:59"):""):v.ueb?heute()+" 23:59":"";return spaet>ende?spaet:ende}
 function wfSuchen(){const d=$("wfDatum").value,a=$("wfAuto").value;if(!d||!a){$("wfErgebnis").textContent="Datum und Auto wählen.";return}
   // Uhrzeit (31.10.2026, Baran): an einem Tag können zwei Mieter das Auto gehabt haben, Rückgabe morgens, Übergabe mittags
-  const z=$("wfZeit").value,amTag=lies("mietixVorgaenge",[]).filter(v=>v.auto===a&&v.vonD&&v.bisD&&v.vonD<=d&&v.bisD>=d&&v.status!=="storniert");
-  const t=z?amTag.filter(v=>v.vonD+" "+(v.vonU||"00:00")<=d+" "+z&&d+" "+z<=v.bisD+" "+(v.bisU||"23:59")):amTag;
+  const z=$("wfZeit").value,amTag=lies("mietixVorgaenge",[]).filter(v=>v.auto===a&&v.vonD&&v.bisD&&v.vonD<=d&&wfEnde(v).slice(0,10)>=d&&v.status!=="storniert");
+  const t=z?amTag.filter(v=>v.vonD+" "+(v.vonU||"00:00")<=d+" "+z&&d+" "+z<=wfEnde(v)):amTag;
   if(!t.length){$("wfErgebnis").innerHTML="Kein Mietvertrag für "+esc(a)+" am "+de(d)+(z?" um "+z+" Uhr":"")+". Dann war das Auto bei uns oder in der Werkstatt.";return}
   const zwei=!z&&t.length>1?'<div class="grau" style="font-size:13px;font-weight:700">An dem Tag hatten '+t.length+' Mieter das Auto. Uhrzeit vom Strafzettel eintragen, dann bleibt der richtige stehen.</div>':"";
-  $("wfErgebnis").innerHTML=zwei+t.map(v=>{const text="Fahrer am "+de(d)+(z?" um "+z+" Uhr":"")+", "+a+(v.kz?" ("+v.kz+")":"")+":\n"+v.name+"\n"+(v.anschrift||"")+"\ngeboren am "+de(v.geb)+(v.gebort?" in "+v.gebort:"")+"\nTelefon "+(v.telefon||"")+(v.email?"\nE-Mail "+v.email:"")+"\nMietvertrag Nr. "+v.nr+", "+de(v.vonD)+(v.vonU?" "+v.vonU+" Uhr":"")+" bis "+de(v.bisD)+(v.bisU?" "+v.bisU+" Uhr":"");
-    return'<div style="margin-top:6px"><b>'+esc(v.name)+'</b><br><span class="grau" style="font-size:13px">'+esc(v.anschrift||"")+'<br>geb. '+de(v.geb)+esc(v.gebort?" in "+v.gebort:"")+', Tel. '+esc(v.telefon||"")+'<br>Mietvertrag '+esc(v.nr)+', '+de(v.vonD)+(v.vonU?" "+v.vonU+" Uhr":"")+' bis '+de(v.bisD)+(v.bisU?" "+v.bisU+" Uhr":"")+'</span>'+
+  $("wfErgebnis").innerHTML=zwei+t.map(v=>{const text="Fahrer am "+de(d)+(z?" um "+z+" Uhr":"")+", "+a+(v.kz?" ("+v.kz+")":"")+":\n"+[v.name,v.anschrift,v.geb?"geboren am "+de(v.geb)+(v.gebort?" in "+v.gebort:""):v.gebort?"geboren in "+v.gebort:"",v.telefon?"Telefon "+v.telefon:"",v.email?"E-Mail "+v.email:"","Mietvertrag Nr. "+v.nr+", "+de(v.vonD)+(v.vonU?" "+v.vonU+" Uhr":"")+" bis "+de(v.bisD)+(v.bisU?" "+v.bisU+" Uhr":"")].filter(Boolean).join("\n");
+    const wfDaten=[v.geb||v.gebort?"geb."+(v.geb?" "+de(v.geb):"")+esc(v.gebort?" in "+v.gebort:""):"",v.telefon?"Tel. "+esc(v.telefon):""].filter(Boolean).join(", ");
+    return'<div style="margin-top:6px"><b>'+esc(v.name)+'</b><br><span class="grau" style="font-size:13px">'+[esc(v.anschrift||""),wfDaten,'Mietvertrag '+esc(v.nr)+', '+de(v.vonD)+(v.vonU?" "+v.vonU+" Uhr":"")+' bis '+de(v.bisD)+(v.bisU?" "+v.bisU+" Uhr":"")].filter(Boolean).join("<br>")+'</span>'+
       '<div class="chips"><div class="chip wfKopie" data-t="'+encodeURIComponent(text)+'">Angaben kopieren (für die Fahrerbenennung)</div>'+(v.telefon?'<a class="chip" style="text-decoration:none;color:inherit" target="_blank" href="https://wa.me/'+nkNummer(v.telefon)+'">WhatsApp</a>':'')+'</div></div>'}).join("");
-  [...$("wfErgebnis").querySelectorAll(".wfKopie")].forEach(c=>c.onclick=()=>{try{navigator.clipboard.writeText(decodeURIComponent(c.dataset.t))}catch(e){}meldung("Kopiert. In das Formular der Behörde einfügen.")})}
+  [...$("wfErgebnis").querySelectorAll(".wfKopie")].forEach(c=>c.onclick=async()=>{const text=decodeURIComponent(c.dataset.t);try{await navigator.clipboard.writeText(text)}catch(e){const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(x){}ta.remove();if(!ok){meldung("Kopieren hat nicht geklappt. Bitte von Hand abschreiben.",true);return}}meldung("Kopiert. In das Formular der Behörde einfügen.")})}
 $("wfDatum").addEventListener("change",wfSuchen);$("wfZeit").addEventListener("change",wfSuchen);$("wfAuto").addEventListener("change",wfSuchen);
 
 /* ---------- Aufgaben ---------- */
@@ -500,7 +507,7 @@ function termineListe(){const st=lies("mietixAutos",{}),l=[];
   Object.keys(st).forEach(n=>[["tuev","TÜV"],["service","Service"],["reifen","Reifen"],["garantie","Garantie"]].forEach(([k,t])=>{const d=st[n][k];if(!d)return;const tage=tageBis(d);if(tage<=30)l.push({auto:n,was:t,datum:d,tage})}));
   return l.sort((a,b)=>a.tage-b.tage)}
 function zeichneTermine(){const l=termineListe();$("termineKarte").classList.toggle("versteckt",!l.length);
-  $("termine").innerHTML=l.map(x=>'<div class="punkt'+(x.tage<=7?" heute":"")+'" style="cursor:default"><span><span class="t">'+x.was+" "+esc(x.auto)+'</span><i>'+(x.tage<0?"überfällig seit "+de(x.datum):x.tage<=2?tagWort(x.tage,x.datum):"in "+x.tage+" Tagen, "+de(x.datum))+'</i></span></div>').join("")}
+  $("termine").innerHTML=l.map(x=>'<div class="punkt'+(x.tage<=7?" heute":"")+'" style="cursor:default"><span><span class="t">'+x.was+" "+esc(x.auto)+'</span><i>'+(x.tage<0?(x.was==="Garantie"?"abgelaufen am ":"überfällig seit ")+de(x.datum):x.tage<=2?tagWort(x.tage,x.datum):"in "+x.tage+" Tagen, "+de(x.datum))+'</i></span></div>').join("")}
 function zeichneAufgaben(){const h=heute();zeichneTermine();
   const l=lies("mietixAufgaben",[]).filter(a=>!a.erledigt&&!a._weg&&a.aufgabe).sort((x,y)=>(x.bis||"9")+(x.seit||"")<(y.bis||"9")+(y.seit||"")?-1:1);
   $("aufgaben").innerHTML=l.length?l.map(a=>{const t=tageBis(a.bis);const wann=a.bis?(t<0?"überfällig seit "+de(a.bis):t===0?"heute":t===1?"morgen, "+de(a.bis):"bis "+de(a.bis)):"";
@@ -508,15 +515,18 @@ function zeichneAufgaben(){const h=heute();zeichneTermine();
   // Fälligkeit direkt verschieben (31.10.2026): eigenes Feld, der Haken für erledigt bleibt wie er ist
   [...$("aufgaben").querySelectorAll("[data-bisa]")].forEach(k=>k.onclick=ev=>{ev.stopPropagation();aufgabeVerschieben(k.dataset.bisa)});
   [...$("aufgaben").querySelectorAll(".punkt[data-a]")].forEach(e=>e.onclick=()=>{const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===e.dataset.a);if(!confirm("„"+((a&&a.aufgabe)||"Aufgabe")+"“ erledigt?\n\nSie verschwindet hier und wird in der Excel abgehakt."))return;if(a){a.erledigt=heute();schreib("mietixAufgaben",l);meldung("Erledigt, steht in 15 Minuten in der Excel");zeichneAufgaben()}})}
-[...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t;
+[...$("neuBis").children].forEach(c=>c.onclick=()=>{[...$("neuBis").children].forEach(x=>x.classList.toggle("an",x===c));NEU_BIS=c.dataset.t===""?null:+c.dataset.t;try{if(NEU_BIS===null)localStorage.removeItem("mietixFeld:aufgabeBis");else localStorage.setItem("mietixFeld:aufgabeBis",String(NEU_BIS))}catch(e){}
   // gewähltes Datum direkt anzeigen (Baran, 31.10.2026: „morgen“ immer mit Datum)
   let z=$("neuBisDatum");if(!z){z=document.createElement("div");z.id="neuBisDatum";z.style.cssText="margin-top:6px;font-size:13px;font-weight:700;color:#6F6F72";$("neuBis").after(z)}
   if(NEU_BIS===null)z.textContent="Ohne Fälligkeit";else{const d=new Date();d.setDate(d.getDate()+NEU_BIS);z.textContent="Fällig am "+["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][d.getDay()]+", "+de(iso(d))}});
+// „morgen“ immer mit Datum, auch auf dem Knopf (Nachtprüfung 09.11.2026); gewählte Fälligkeit bleibt wie der Text beim Neuladen
+{const c=$("neuBis").querySelector('[data-t="1"]'),d=new Date();d.setDate(d.getDate()+1);c.textContent="morgen, "+de(iso(d)).slice(0,6);
+ let g=null;try{g=localStorage.getItem("mietixFeld:aufgabeBis")}catch(e){}const k=g!==null&&$("neuBis").querySelector('[data-t="'+g+'"]');if(k)k.click()}
 // Auswahl sichtbar (1.11.2026): beim Laden ist der Knopf zum gemerkten Wert markiert (ohne Wahl = kein Datum)
 [...$("neuBis").children].forEach(x=>x.classList.toggle("an",(x.dataset.t===""?null:+x.dataset.t)===NEU_BIS));
-$("neuLos").onclick=()=>{const t=$("neuAufgabe").value.trim();if(!t){$("neuAufgabe").focus();if(window.mxFehler)mxFehler("Erst Aufgabe eintippen",4000);else meldung("Erst Aufgabe eintippen");return}const d=new Date();if(NEU_BIS!==null)d.setDate(d.getDate()+NEU_BIS);
+$("neuLos").onclick=()=>{const t=$("neuAufgabe").value.trim();if(!t){$("neuAufgabe").focus();if(window.mxFehler)mxFehler("Erst Aufgabe eintippen",4000);else meldung("Erst Aufgabe eintippen",true);return}const d=new Date();if(NEU_BIS!==null)d.setDate(d.getDate()+NEU_BIS);
   const l=lies("mietixAufgaben",[]);l.push({id:"h"+String(Date.now())+Math.random().toString(36).slice(2,6),aufgabe:t,status:"Offen",bis:NEU_BIS===null?"":iso(d),seit:heute(),quelle:"handy"});
-  schreib("mietixAufgaben",l);$("neuAufgabe").value="";if(window.AUFG_ENT)AUFG_ENT.weg();meldung("Aufgabe angelegt");zeichneAufgaben()};
+  schreib("mietixAufgaben",l);$("neuAufgabe").value="";if(window.AUFG_ENT)AUFG_ENT.weg();try{localStorage.removeItem("mietixFeld:aufgabeBis")}catch(e){}meldung("Aufgabe angelegt");zeichneAufgaben()};
 document.addEventListener("DOMContentLoaded",()=>{if(window.mxEntwurf){window.AUFG_ENT=mxEntwurf("#s_aufgaben","aufgabeNeu",["neuAufgabe"]);AUFG_ENT.holen()}});   // Getipptes bleibt beim Neuladen (05.11.2026)
 $("neuAufgabe").addEventListener("keydown",e=>{if(e.key==="Enter")$("neuLos").click()});
 
@@ -549,7 +559,7 @@ async function fsLaden(){if(!lies("mietixSitzung",null))return;const namen=[...d
 function fsKnoepfe(){document.querySelectorAll(".fs").forEach(z=>{const n=z.dataset.fs;
   z.querySelector(".fsAuf").onclick=async()=>{if(!lies("mietixSitzung",null)){alert("Bitte erst anmelden.");return}   // sonst blitzt ein leerer Tab auf (Prüfung 31.10.2026)
     const w=window.open("","_blank");
-    try{const datei=FS[n]||await fsNeuester(n);if(!datei){if(w)w.close();meldung("Noch kein Fahrzeugschein hinterlegt");return}
+    try{const datei=FS[n]||await fsNeuester(n);if(!datei){if(w)w.close();meldung("Noch kein Fahrzeugschein hinterlegt",true);return}
       const j=await fsHole("/object/sign/fahrzeugscheine/"+fsOrdner(n)+"/"+encodeURIComponent(datei),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({expiresIn:600})});
       const url=FS_URL+(j.signedURL||j.signedUrl);if(w)w.location=url;else location.href=url}
     catch(e){if(w)w.close();alert(e.message)}};
