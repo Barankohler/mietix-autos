@@ -244,6 +244,7 @@ html body .buGk,html body .alK,html body .uGk,html body h2.hT,html body #s_unter
   const norm=t=>String(t==null?"":t).toLowerCase().replace(/\s+/g," ").trim();
   const freiTeile=w=>{const t=String(w||"").split("|");return t[0]==="frei"?{vd:t[1]||"",vu:t[2]||"10:00",bd:t[3]||"",bu:t[4]||"10:00"}:null};
   const freiText=w=>{const p=freiTeile(w),j=new Date().getFullYear(),k=x=>{const t=x.split("-");return Number(t[2])+"."+Number(t[1])+"."+(Number(t[0])===j?"":t[0].slice(2))};return p.vd&&p.bd?k(p.vd)+" bis "+k(p.bd):p.vd?"ab "+k(p.vd):"bis "+k(p.bd)};
+  const freiLang=w=>{const p=freiTeile(w),j=new Date().getFullYear(),k=(x,u)=>{const t=x.split("-");return Number(t[2])+"."+Number(t[1])+"."+(Number(t[0])===j?"":t[0].slice(2))+" "+u+" Uhr"};return p.vd&&p.bd?k(p.vd,p.vu)+" bis "+k(p.bd,p.bu):p.vd?"ab "+k(p.vd,p.vu):"bis "+k(p.bd,p.bu)};
   const vbZeile=(t,d,u)=>'<div class="lkVbZ"><div><label for="'+d+'">'+t+'</label><input type="date" id="'+d+'"></div><div><label for="'+u+'">Uhr</label><input type="time" id="'+u+'" value="10:00"></div></div>';
   const MK_L=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"],MK_K=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
   const monText=v=>/^\d{4}-\d\d$/.test(v)?MK_L[+v.slice(5,7)-1]+" "+v.slice(0,4):v;
@@ -285,7 +286,9 @@ html body .buGk,html body .alK,html body .uGk,html body h2.hT,html body #s_unter
     const host=()=>document.getElementById(hostId);
     const felderZeigen=()=>{(o.felder||[]).forEach(f=>{const el=host().querySelector('[data-lk="'+f.k+'"]');if(!el)return;const v=LK.w[f.k]||"",p=(f.werte()||[]).find(x=>x[0]===v);
       el.querySelector("b").textContent=v?(freiTeile(v)?freiText(v):f.monate?monText(v):p?p[1]:v):f.alle;el.classList.toggle("gew",!!v)})};
-    const zeileZeigen=()=>{const z=host().querySelector(".lkZeile");if(!z)return;z.innerHTML='<span>'+esc(zeileT)+'</span>'+(LK.aktiv()?'<a role="button" tabindex="0">Filter zurücksetzen</a>':"");
+    // Gewählter Zeitraum mit Uhrzeit in der Trefferzeile, auf allen Geräten gleich (10.11.2026, Baran)
+    const zeitZusatz=()=>(o.felder||[]).filter(f=>f.frei&&freiTeile(LK.w[f.k])).map(f=>freiLang(LK.w[f.k])).join(", ");
+    const zeileZeigen=()=>{const z=host().querySelector(".lkZeile");if(!z)return;const zz=zeitZusatz();z.innerHTML='<span>'+esc(zeileT+(zz?", "+zz:""))+'</span>'+(LK.aktiv()?'<a role="button" tabindex="0">Filter zurücksetzen</a>':"");
       const a=z.querySelector("a");if(a)a.onclick=()=>{LK.roh="";LK.q="";LK.w={};merke();const i=host().querySelector("input");if(i)i.value="";kreuz();felderZeigen();o.neu()}};
     const kreuz=()=>{const k=host().querySelector(".lkSuche button");if(k)k.style.display=LK.roh?"":"none"};
     LK.aktiv=()=>!!LK.q||Object.keys(LK.w).some(k=>LK.w[k]);
@@ -300,7 +303,7 @@ html body .buGk,html body .alK,html body .uGk,html body h2.hT,html body #s_unter
     return LK};
   const tag=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
   window.mxListenkopf.zeit=[["heute","Heute"],["woche","Diese Woche"],["naechsteW","Nächste Woche"],["monat","Dieser Monat"],["vormonat","Letzter Monat"],["naechsterM","Nächster Monat"],["jahr","Dieses Jahr"]];
-  window.mxListenkopf.freiText=freiText;window.mxListenkopf.monatWahl=monatBlatt;   // Monat und Jahr auch ohne Filterfeld: monatWahl(titel,false,"",[datenMonate],"JJJJ-MM",w=>…), leer = aktueller Monat
+  window.mxListenkopf.freiText=freiText;window.mxListenkopf.freiLang=freiLang;window.mxListenkopf.monatWahl=monatBlatt;   // Monat und Jahr auch ohne Filterfeld: monatWahl(titel,false,"",[datenMonate],"JJJJ-MM",w=>…), leer = aktueller Monat
   /* Liegt eine Miete im Zeitraum? Bei von/bis mit Uhrzeit minutengenau, bei den festen Knöpfen wie bisher nach Tagen */
   window.mxListenkopf.ueberlappt=function(w,vd,vu,bd,bu){const s=window.mxListenkopf.spanne(w);if(!s)return true;
     if(freiTeile(w)){const an=vd?vd+"T"+(vu||"00:00"):"",en=(bd||vd)?(bd||vd)+"T"+(bu||"23:59"):"";return an<=s[1]&&en>=s[0]}
@@ -361,10 +364,20 @@ function garantieZeile(a,auto){const t=tageBis(a.garantie),ue=a.garantieUeber?",
 // Termin eintragen (31.10.2026, Baran: "nebendran ein Eintragefeld"): geht sofort aufs Handy und über die Brücke in die Excel
 const TNAME={tuev:"TÜV",service:"Service",reifen:"Reifen",garantie:"Garantie",km:"Kilometerstand",notiz:"Notiz"};let T_AUTO="",T_FELD="";
 let T_AUFG="";
+// Angefangen getippt im Termin-Fenster bleibt je Auto und Art (oder je Aufgabe), auch bei ✕, Zurück und Neuladen (Prüfung 10.11.2026)
+const T_ENT_K="mietixFeld:autoTermin";
+const tEntSchl=()=>T_AUFG?"aufgabe|"+T_AUFG:T_AUTO+"|"+T_FELD;
+const tEntAlle=()=>{try{return JSON.parse(localStorage.getItem(T_ENT_K)||"{}")||{}}catch(e){return{}}};
+function tEntMerk(){if(!T_AUFG&&!T_AUTO)return;const l=tEntAlle();l[tEntSchl()]={datum:$("tDatum").value,zahl:$("tZahl").value,text:$("tText").value,ueber:$("tUeber").value,start:$("fTermin").dataset.start||""};try{localStorage.setItem(T_ENT_K,JSON.stringify(l))}catch(e){}}
+function tEntWeg(){const l=tEntAlle();delete l[tEntSchl()];try{if(Object.keys(l).length)localStorage.setItem(T_ENT_K,JSON.stringify(l));else localStorage.removeItem(T_ENT_K)}catch(e){}}
+// Fenster öffnet: Stand der Daten merken, liegt ein Entwurf vor, kommt das Getippte wieder hinein
+function tEntHolen(){const st=[$("tDatum").value,$("tZahl").value,$("tText").value,$("tUeber").value].join("~");$("fTermin").dataset.start=st;const e=tEntAlle()[tEntSchl()];if(!e)return;
+  if(e.start&&e.start!==st){tEntWeg();return}   // die Daten haben sich inzwischen geändert (anderes Gerät): der alte Entwurf gilt nicht mehr
+  $("tDatum").value=e.datum||"";$("tZahl").value=e.zahl||"";$("tText").value=e.text||"";$("tUeber").value=e.ueber||""}
 function aufgabeVerschieben(id){const a=lies("mietixAufgaben",[]).find(x=>x.id===id);if(!a)return;T_AUFG=id;T_AUTO="";T_FELD="";$("fTermin").dataset.art="datum";
   $("fTermin").querySelector("h3").textContent="Aufgabe verschieben";$("tAuto").textContent=a.aufgabe;$("tLab").textContent="Fällig am";$("tLab").htmlFor="tDatum";
   $("tDatum").value=a.bis||"";["tZahl","tText"].forEach(i=>$(i).classList.add("versteckt"));$("tDatum").classList.remove("versteckt");
-  $("tUeberW").classList.add("versteckt");$("tWeg").classList.add("versteckt");mxAuf("fTermin")}
+  $("tUeberW").classList.add("versteckt");$("tWeg").classList.add("versteckt");tEntHolen();mxAuf("fTermin")}
 function terminAuf(auto,feld){T_AUFG="";T_AUTO=auto;T_FELD=feld;const a=lies("mietixAutos",{})[auto]||{};
   $("fTermin").querySelector("h3").textContent=TNAME[feld]+" eintragen";$("tAuto").textContent=auto;
   const art=feld==="km"?"zahl":feld==="notiz"?"text":"datum";$("fTermin").dataset.art=art;
@@ -373,18 +386,20 @@ function terminAuf(auto,feld){T_AUFG="";T_AUTO=auto;T_FELD=feld;const a=lies("mi
   ["tDatum","tZahl","tText"].forEach(i=>$(i).classList.toggle("versteckt",i!==(art==="zahl"?"tZahl":art==="text"?"tText":"tDatum")));
   $("tLab").htmlFor=art==="zahl"?"tZahl":art==="text"?"tText":"tDatum";
   $("tUeberW").classList.toggle("versteckt",feld!=="garantie");$("tUeber").value=a.garantieUeber||"";
-  $("tWeg").classList.toggle("versteckt",!a[feld]&&!(feld==="garantie"&&a.garantieUeber));mxAuf("fTermin")}
+  $("tWeg").classList.toggle("versteckt",!a[feld]&&!(feld==="garantie"&&a.garantieUeber));tEntHolen();mxAuf("fTermin")}
 function terminSpeichern(loeschen){
   if(T_AUFG){const d=$("tDatum").value;if(!d){meldung("Bitte ein Datum wählen",true);return}const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===T_AUFG);
-    if(a){a.bis=d;a.bisNeu={bis:d,am:new Date().toISOString()};schreib("mietixAufgaben",l)}T_AUFG="";mxZu();zeichneAufgaben();meldung("✓ Verschoben auf "+de(d)+", kommt auch in die Excel");return}
+    if(a){a.bis=d;a.bisNeu={bis:d,am:new Date().toISOString()};schreib("mietixAufgaben",l)}tEntWeg();T_AUFG="";mxZu();zeichneAufgaben();meldung("✓ Verschoben auf "+de(d)+", kommt auch in die Excel");return}
   const st=lies("mietixAutos",{}),a=Object.assign({},st[T_AUTO]||{}),neu={};
   const art=$("fTermin").dataset.art;neu[T_FELD]=loeschen?"":art==="zahl"?String(Math.max(zahl($("tZahl").value)||0,0)||""):art==="text"?$("tText").value.trim():$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
   if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){meldung(art==="zahl"?"Bitte den Kilometerstand eintragen":art==="text"?"Bitte etwas eintragen":"Bitte ein Datum wählen",true);return}
   Object.assign(a,neu);a.handy=Object.assign({},a.handy||{},neu,{am:new Date().toISOString()});st[T_AUTO]=a;schreib("mietixAutos",st);
-  mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert, kommt auch in die Excel")}
+  tEntWeg();mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert, kommt auch in die Excel")}
 // Termine, Kilometerstand und Notiz nach dem Antippen: das Fenster passt sich an (Datum, Zahl oder Text)
 // Liste und Detailansicht (01.11.2026, Baran): eine Zeile pro Auto, antippen öffnet alle Felder dieses Autos
 let AUTO_OFFEN="",AUTO_WUNSCH=new URLSearchParams(location.search).get("auto")||"",LISTE_Y=0;
+const WIEDER=(()=>{try{return /^(reload|back_forward)$/.test(((performance.getEntriesByType&&performance.getEntriesByType("navigation")[0])||{}).type)}catch(e){return false}})();   // nur Neuladen und Zurück/Vor stellen die Ansicht wieder her, ein neuer Aufruf beginnt mit der Liste
+try{if(WIEDER&&history.state&&history.state.mxAuto)AUTO_OFFEN=history.state.mxAuto}catch(e){}   // neu geladen in der Detailansicht: sie bleibt offen, der Zurück-Schritt passt (Prüfung 10.11.2026)
 const kurz=s=>s?de(s).slice(0,6):"";
 const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["istfrei","Frei"],["gebucht","Gebucht"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});
 if(AUTO_LK.w.stand==="frei")AUTO_LK.w.stand="istfrei";   // Nachtprüfung 09.11.2026: „frei“ hält der Listenkopf für einen eigenen Zeitraum („bis NaN.NaN.“), alter gemerkter Filter zieht mit
@@ -392,7 +407,7 @@ const NEU_PUNKT=(()=>{try{return JSON.parse(localStorage.getItem("mietixFeld:zus
 const neuPunktMerken=()=>{try{if(Object.keys(NEU_PUNKT).some(k=>NEU_PUNKT[k]))localStorage.setItem("mietixFeld:zustandPunkt",JSON.stringify(NEU_PUNKT));else localStorage.removeItem("mietixFeld:zustandPunkt")}catch(e){}};
 const isoHeute=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const MAPPE=nr=>"https://barankohler.github.io/mietix-vertrag/?nr="+encodeURIComponent(nr)+"&zeige=mappe&von="+encodeURIComponent(AUTO_OFFEN||"");
-const BUCHUNG=id=>"https://barankohler.github.io/mietix-vertrag/?buchung="+encodeURIComponent(id);   // gebucht ohne Mietvertrag: dieselbe Seite wie Startseite und Kalender
+const BUCHUNG=id=>"https://barankohler.github.io/mietix-vertrag/?buchung="+encodeURIComponent(id)+"&von="+encodeURIComponent(AUTO_OFFEN||"Autos");   // Zurück-Ziel wie bei der Mappe (Prüfung 10.11.2026)   // gebucht ohne Mietvertrag: dieselbe Seite wie Startseite und Kalender
 function autoInfo(n,stamm,vorg,zust,h){const a=stamm[n]||{};
   const kms=vorg.filter(v=>v.auto===n).map(v=>zahl((v.rueck||{}).km)||zahl((v.ueb||{}).km)||zahl(v.km)||0);
   // Von Hand eingetragen (Prüfung 06.11.2026, Getipptes bleibt): gilt auch nach unten, nur Protokolle nach diesem Tag dürfen ihn wieder erhöhen
@@ -428,19 +443,19 @@ function autoZeile(n,i){const kz=i.a.kz||"";let schild,text;
   else{schild='<span class="schild sg">frei</span>'+(i.achtung.length?'<span class="schild sy">Achtung</span>':"");const plan=i.naechste?"nächste Miete "+kurz(i.naechste.vonD):"keine Miete geplant";text=i.achtung.length?i.achtung.join(", ")+(i.naechste?", "+plan:""):plan}   // Achtung (TÜV, Kratzer) ändert nichts daran, dass das Auto frei ist (09.11.2026)
   if(i.jetzt&&i.achtung.length)text+=", "+i.achtung[0];
   return'<div class="aZeile" data-oeffne="'+esc(n)+'" role="button"><span class="aText"><b>'+esc(n)+'</b><i>'+String((kz?kz+", ":"")+text).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</i></span>'+schild+'<span class="aPf">›</span></div>'}
-function autoAuf(n){LISTE_Y=scrollY;AUTO_OFFEN=n;try{history.pushState({mxAuto:n},"")}catch(e){}zeichneAutos();scrollTo(0,0)}
+function autoAuf(n){LISTE_Y=scrollY;AUTO_OFFEN=n;try{history.pushState(Object.assign({},history.state||{},{mxAuto:n,mxSicht:"autos"}),"")}catch(e){}zeichneAutos();scrollTo(0,0)}
 function autoZu(){if(!AUTO_OFFEN)return false;
   if(history.state&&history.state.mxAuto&&!history.state.mxDirekt){history.back();return true}
   AUTO_OFFEN="";const u=new URL(location.href);if(u.searchParams.has("auto")){u.searchParams.delete("auto");try{history.replaceState(null,"",u.pathname+u.search+u.hash)}catch(e){}}
   zeichneAutos();scrollTo(0,LISTE_Y);return true}
 window.mxZurueck=function(){return SICHT==="autos"&&autoZu()};   // app.py: Wischen vom Rand schließt erst die Detailansicht
-addEventListener("popstate",()=>{const n=(history.state&&history.state.mxAuto)||"";if(n===AUTO_OFFEN)return;AUTO_OFFEN=n;zeichneAutos();scrollTo(0,n?0:LISTE_Y)});
+addEventListener("popstate",()=>{const st=history.state||{},n=st.mxAuto||"",sv=st.mxSicht||"autos";if(sv!==SICHT)zeige(sv,true);if(n===AUTO_OFFEN)return;AUTO_OFFEN=n;zeichneAutos();scrollTo(0,n?0:LISTE_Y)});
 function zeichneAutos(){
   const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):[],stamm=lies("mietixAutos",{}),vorg=lies("mietixVorgaenge",[]),zust=lies("mietixZustand",[]),h=heute();
   Object.keys(stamm).forEach(n=>{if(namen.indexOf(n)<0)namen.push(n)});
   // Direktaufruf ?auto=Modell (ohne Groß/Klein), wartet bis die Namen da sind
   if(AUTO_WUNSCH){const w=AUTO_WUNSCH.trim().toLowerCase(),t=namen.find(n=>n.toLowerCase()===w);if(t){AUTO_OFFEN=t;AUTO_WUNSCH="";try{history.replaceState(Object.assign({},history.state||{},{mxAuto:t,mxDirekt:1}),"")}catch(e){}}}   // Nachtprüfung 09.11.2026: sonst schließt jedes Fenster die Karte
-  if(AUTO_OFFEN&&namen.indexOf(AUTO_OFFEN)<0&&namen.length)AUTO_OFFEN="";
+  if(AUTO_OFFEN&&namen.indexOf(AUTO_OFFEN)<0&&namen.length&&D&&D.cars)AUTO_OFFEN="";   // erst prüfen, wenn die Preisdatei da ist, sonst schließt Neuladen die Detailansicht eines Autos ohne Stammdaten (10.11.2026)
   const kn=document.querySelector(".mxKnopf[data-fenster=fWer]");if(kn)kn.classList.toggle("versteckt",!!AUTO_OFFEN);
   if(!AUTO_OFFEN){
     // Listenkopf (04.11.2026): suchen nach Name und Kennzeichen, filtern nach Stand
@@ -484,8 +499,11 @@ function zeichneAutos(){
   [...$("autos").querySelectorAll("input[data-neu]")].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter")$("autos").querySelector('button[data-neuz="'+i.dataset.neu+'"]').click()}))}
 
 /* ---------- Wer fuhr wann: Mieter zum Datum, Angaben für die Fahrerbenennung kopieren ---------- */
-function wfFuellen(){const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):Object.keys(lies("mietixAutos",{}));const alt=$("wfAuto").value;
-  $("wfAuto").innerHTML='<option value="">Auto</option>'+namen.map(n=>'<option>'+n+'</option>').join("");if(alt)$("wfAuto").value=alt}
+function wfFuellen(){const namen=D&&D.cars?D.cars.map(c=>c.anzeige||c.n):Object.keys(lies("mietixAutos",{}));let alt=$("wfAuto").value;
+  if(!alt){const g=lies("mietixFeld:autosWer",null);if(g&&g.wfAuto)alt=g.wfAuto}   // gemerktes Auto, sobald die Namen da sind
+  $("wfAuto").innerHTML='<option value="">Auto</option>'+namen.map(n=>'<option>'+n+'</option>').join("");if(alt&&namen.includes(alt)){const neu=$("wfAuto").value!==alt;$("wfAuto").value=alt;if(neu)$("wfAuto").dispatchEvent(new Event("change",{bubbles:true}))}}
+// Wer fuhr wann: Datum, Uhrzeit und Auto bleiben beim Neuladen (Prüfung 10.11.2026)
+document.addEventListener("DOMContentLoaded",()=>{if(window.mxEntwurf){window.WF_ENT=mxEntwurf("#fWer","autosWer",["wfDatum","wfZeit","wfAuto"]);if(WF_ENT.holen())wfSuchen()}});
 // Nachtprüfung 09.11.2026: Mieter gilt bis zur tatsächlichen Rückgabe; übergeben und noch nicht zurück: bis heute. Früh zurück ändert nichts (Mietzeit bleibt).
 function wfEnde(v){const ende=v.bisD+" "+(v.bisU||"23:59"),r=v.rueck||{},spaet=v.status==="zurück"?(r.datum?r.datum+" "+(r.uhr||"23:59"):""):v.ueb?heute()+" 23:59":"";return spaet>ende?spaet:ende}
 function wfSuchen(){const d=$("wfDatum").value,a=$("wfAuto").value;if(!d||!a){$("wfErgebnis").textContent="Datum und Auto wählen.";return}
@@ -531,10 +549,15 @@ document.addEventListener("DOMContentLoaded",()=>{if(window.mxEntwurf){window.AU
 $("neuAufgabe").addEventListener("keydown",e=>{if(e.key==="Enter")$("neuLos").click()});
 
 /* ---------- Reiter, Start ---------- */
-function zeige(s){SICHT=s;$("s_autos").classList.toggle("versteckt",s!=="autos");$("s_aufgaben").classList.toggle("versteckt",s!=="aufgaben");
+// Reiter (Prüfung 10.11.2026): aus der offenen Detailansicht ist der Wechsel ein eigener Schritt, Zurück führt wieder dorthin. Sonst nur gemerkt, damit Neuladen denselben Reiter zeigt
+function zeige(s,ausVerlauf){if(!ausVerlauf&&s!==SICHT){const st=history.state||{};
+    if(st.mxReiterSchritt&&s===(st.mxVorSicht||"autos")){history.back();return}   // zurück zum Reiter, von dem der Schritt kam
+    try{if(s!=="autos"&&AUTO_OFFEN&&st.mxAuto&&!st.mxDirekt)history.pushState(Object.assign({},st,{mxSicht:s,mxReiterSchritt:1,mxVorSicht:SICHT}),"");else history.replaceState(Object.assign({},st,{mxSicht:s}),"")}catch(e){}}
+  SICHT=s;$("s_autos").classList.toggle("versteckt",s!=="autos");$("s_aufgaben").classList.toggle("versteckt",s!=="aufgaben");
   [...document.querySelectorAll(".reiter div")].forEach(c=>c.classList.toggle("an",c.dataset.s===s));if(s==="autos")zeichneAutos();else zeichneAufgaben()}
 [...document.querySelectorAll(".reiter div")].forEach(c=>c.onclick=()=>zeige(c.dataset.s));
 if(new URLSearchParams(location.search).get("zeige")==="aufgaben")zeige("aufgaben");
+else if(WIEDER){try{const sv=history.state&&history.state.mxSicht;if(sv&&sv!=="autos")zeige(sv,true)}catch(e){}}   // Neuladen: derselbe Reiter
 zeichneAutos();zeichneAufgaben();
 wfFuellen();
 fetch("https://barankohler.github.io/mietix-preise/preise.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p&&p.cars){D=p;zeichneAutos();wfFuellen()}}).catch(()=>{});
@@ -574,7 +597,7 @@ function fsKnoepfe(){document.querySelectorAll(".fs").forEach(z=>{const n=z.data
 zeichneAutos();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){zeichneAutos();zeichneAufgaben()}});
 </script>
-<script>$("tOk").onclick=()=>terminSpeichern(false);$("tWeg").onclick=()=>{if(confirm((TNAME[T_FELD]||"Eintrag")+" bei "+T_AUTO+" löschen?"))terminSpeichern(true)};function ueMarken(){const w=$("tUeber").value.trim();$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.classList.toggle("an",c.dataset.ue===w))}$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.onclick=()=>{$("tUeber").value=c.dataset.ue;ueMarken()});$("tUeber").addEventListener("input",ueMarken);document.addEventListener("click",()=>setTimeout(ueMarken,0),true);</script><script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
+<script>["tDatum","tZahl","tText","tUeber"].forEach(i=>["input","change"].forEach(ev=>$(i).addEventListener(ev,tEntMerk)));$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.addEventListener("click",()=>setTimeout(tEntMerk,0)));$("tOk").onclick=()=>terminSpeichern(false);$("tWeg").onclick=()=>{if(confirm((TNAME[T_FELD]||"Eintrag")+" bei "+T_AUTO+" löschen?"))terminSpeichern(true)};function ueMarken(){const w=$("tUeber").value.trim();$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.classList.toggle("an",c.dataset.ue===w))}$("fTermin").querySelectorAll("[data-ue]").forEach(c=>c.onclick=()=>{$("tUeber").value=c.dataset.ue;ueMarken()});$("tUeber").addEventListener("input",ueMarken);document.addEventListener("click",()=>setTimeout(ueMarken,0),true);</script><script>/* Mietix Abgleich: Mietverträge, Anfragen, Kunden und Fahrzeuge auf allen Geräten gleich (Supabase Frankfurt, seit 26.10.2026).
    Wird von tools/vertrag/build_html.py und tools/anfragen/build_html.py in die Seite eingebaut.
    - Die Werkzeuge arbeiten weiter nur mit localStorage. Dieser Baustein merkt jede Änderung an den vier Speichern,
      schickt sie hoch und holt neue Stände der anderen Geräte (beim Start, beim Zurückkehren zur Seite, jede Minute).
@@ -985,18 +1008,27 @@ zeigen();abgleichen();auslagernBald();
     document.documentElement.style.overflow="";document.body.style.overflow=""};
   window.mxAuf=function(id){const f=document.getElementById(id);if(!f)return;schliessen();bg.classList.add("auf");f.classList.add("auf");
     document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";f.scrollTop=0;
-    if(!imVerlauf){try{history.pushState(Object.assign({},history.state||{},{mxF:id}),"");imVerlauf=true}catch(e){}}};
+    if(!imVerlauf){try{history.pushState(Object.assign({},history.state||{},{mxF:id}),"");imVerlauf=true}catch(e){}}
+    snapF=f;snap=f.classList.contains("mxSchutz")?werte(f):null};
+  // Fenster mit Geld (Klasse mxSchutz, 10.11.2026): Schließen durch ✕, Tipp daneben, Esc oder Zurück fragt bei Änderungen nach. Speichern schließt ohne Frage.
+  let snap=null,snapF=null;
+  const werte=function(f){return[...f.querySelectorAll("input,textarea,select")].map(function(i){return i.type==="checkbox"||i.type==="radio"?i.checked:i.value}).join("~")+"|"+[...f.querySelectorAll(".an,.chip.an")].map(function(x){return x.textContent}).join("~")};
+  const darfZu=function(){if(!snap||!snapF||!snapF.classList.contains("auf"))return true;if(werte(snapF)===snap)return true;if(confirm("Änderungen verwerfen?\n\nDas Getippte in diesem Fenster geht verloren.")){snap=null;return true}return false};
+  window.mxGeaendertWeg=function(){snap=null};
   // ✕ nimmt den Eintrag wieder weg. Springt die Seite im selben Moment weiter, bleibt er als „überspringen“ im Verlauf stehen.
   let still=false,skipT=null;
   window.mxSkipNimm=function(){if(skipT){clearTimeout(skipT);skipT=null;return 1}return 0};   // die Seite springt selbst zurück und nimmt den Eintrag gleich mit
   window.mxZu=function(){schliessen();if(!imVerlauf)return;imVerlauf=false;try{history.replaceState(Object.assign({},history.state||{},{mxSkip:1}),"")}catch(e){}
     skipT=setTimeout(function(){skipT=null;if(history.state&&history.state.mxSkip){still=true;history.back()}},0)};
   addEventListener("popstate",function(e){if(still){still=false;e.stopImmediatePropagation();return}
-    if(imVerlauf){imVerlauf=false;schliessen();e.stopImmediatePropagation();return}
+    if(imVerlauf){e.stopImmediatePropagation();if(!darfZu()){try{history.pushState(Object.assign({},history.state||{},{mxF:snapF&&snapF.id}),"")}catch(x){}return}imVerlauf=false;schliessen();return}
     if(e.state&&e.state.mxSkip){e.stopImmediatePropagation();history.back()}},true);
   document.addEventListener("click",function(e){const k=e.target.closest("[data-fenster]");if(k){e.preventDefault();mxAuf(k.dataset.fenster);return}
-    if(e.target.closest(".mxZu")||e.target===bg)mxZu()});
-  document.addEventListener("keydown",function(e){if(e.key==="Escape")mxZu()})})();
+    if((e.target.closest(".mxZu")||e.target===bg)&&darfZu())mxZu()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&darfZu())mxZu()});
+  // Neu geladen, während ein Fenster offen war (zum Beispiel nach WhatsApp): das Fenster ist zu, sein Schritt steht noch im Verlauf.
+  // Ohne Aufräumen täte das erste Zurück nichts (Prüfung 10.11.2026). Den Schritt still zurückgehen, die Seite merkt davon nichts.
+  try{if(history.state&&history.state.mxF&&!document.querySelector(".mxFenster.auf")&&/^(reload|back_forward)$/.test((((performance.getEntriesByType&&performance.getEntriesByType("navigation")[0])||{}).type)||"")){still=true;history.back()}}catch(e){}})();
 </script><script>
 /* Schutz (1.11.2026, Baran: geht etwas nicht, roter Hinweis mit Grund; alles sofort speichern) */
 (function(){if(window.mxFehler)return;
@@ -1142,12 +1174,19 @@ zeigen();abgleichen();auslagernBald();
       "main{max-width:680px!important;margin-left:auto!important;margin-right:auto!important;box-sizing:border-box;padding-left:16px!important;padding-right:16px!important}header .plus{right:max(16px,calc((100% - 680px)/2 + 16px))!important}}");
   document.head.appendChild(st);
 
+  // Eigene Schritte zählen (mxI im Verlauf), damit „‹ Start“ genau bis zur Startseite zurückgehen kann
+  (function(){try{const ps=history.pushState.bind(history),rs=history.replaceState.bind(history);
+    if(!(history.state&&"mxI" in history.state))rs(Object.assign({},history.state||{},{mxI:0}),"");
+    history.pushState=function(st,t,u){const i=((history.state&&history.state.mxI)||0)+1;return ps(Object.assign({},st||{},{mxI:i}),t,u)};
+    history.replaceState=function(st,t,u){const i=(history.state&&history.state.mxI)||0;return rs(Object.assign({},st||{},{mxI:(st&&"mxI" in st)?st.mxI:i}),t,u)}}catch(e){}})();
+  window.mxZurStart=function(){try{const r=document.referrer||"",start="https://barankohler.github.io/mietix-zentrale/";if(r&&r.split("#")[0].replace(/index\.html$/,"")===start.split("#")[0].replace(/index\.html$/,"")){history.go(-(((history.state&&history.state.mxI)||0)+1));return true}}catch(e){}return false};
   // ‹ Start und Symbol in der Kopfzeile
   const ziel=document.querySelector("header h1")||document.querySelector(".topbar");
   const TITEL={anfragen:"Anfragen",angebot:"Angebot",kalender:"Kalender",vertrag:"Buchungen",kunden:"Kunden",autos:"Autos",geld:"Geld",
     schaeden:/schadensformular/.test(pfad)?"Schadensmeldung":/schadensklaerung/.test(pfad)?"Schadensklärung":"Schäden",nachrichten:"Nachrichten",zahlen:"Zahlen",story:"Story",papierkorb:"Papierkorb",einstellungen:"Einstellungen"};
   if(ziel&&!istStart&&!document.querySelector(".mxStart")){
     const a=document.createElement("a");a.className="mxStart";a.href="https://barankohler.github.io/mietix-zentrale/";a.innerHTML="<b>‹</b>Start";a.setAttribute("aria-label","Zur Startseite");
+    a.addEventListener("click",function(e){if(mxZurStart()){e.preventDefault()}});   // zurück statt vorwärts: kein Kreis im Verlauf (10.11.2026)
     const top=document.createElement("div");top.className="mxTop";top.appendChild(a);
     const punkt=ziel.querySelector("#abgleichPunkt"),titel=TITEL[art]||(ziel.textContent||"").replace(/^\s*MIETIX\s*/i,"").trim();
     let h=ziel;if(ziel.tagName!=="H1"){h=document.createElement("h1");ziel.appendChild(h)}
@@ -1155,15 +1194,13 @@ zeigen();abgleichen();auslagernBald();
     h.parentNode.insertBefore(top,h);
     addEventListener("scroll",()=>document.documentElement.classList.toggle("mxKlein",scrollY>40),{passive:true})}
 
-  // Wischen vom linken Rand = zurück (nur als App, im Browser macht das Safari)
+  // Wischen vom linken Rand = genau dasselbe wie Zurück (10.11.2026, Prüfung: eigener Weg sprang zu weit)
   const alsApp=navigator.standalone||matchMedia("(display-mode: standalone)").matches;
   if(alsApp){let x0=null,y0=0;
     document.addEventListener("touchstart",e=>{const t=e.touches[0];x0=(t.clientX<=24&&e.touches.length===1&&!e.target.closest("canvas,.pad,#ug,input,textarea,select"))?t.clientX:null;y0=t.clientY},{passive:true});
     document.addEventListener("touchend",e=>{if(x0===null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=Math.abs(t.clientY-y0);x0=null;if(dx<80||dy>60)return;
-      if(document.querySelector(".mxFenster.auf")&&window.mxZu){mxZu();return}
-      if(typeof window.mxZurueck==="function"&&window.mxZurueck())return;
-      if(istStart)return;
-      if(history.length>1&&document.referrer.indexOf(location.origin)===0)history.back();else location.href="https://barankohler.github.io/mietix-zentrale/"},{passive:true})}
+      if(istStart&&!(history.state&&(history.state.mxI||history.state.mxF)))return;
+      if(history.length>1)history.back();else location.href="https://barankohler.github.io/mietix-zentrale/"},{passive:true})}
 
   // Neue Version: die Seite aus dem Netz mit der geladenen vergleichen (ohne Daten, nur der Text der Seite)
   // Seit 05.11.2026: nur die Kopfzeile abfragen (Stand der Seite im Netz gegen Stand der geladenen Seite), nicht jedes Mal die ganze Seite. Kennt der Server keinen Stand, wie bisher über den Text.
@@ -1225,7 +1262,7 @@ zeigen();abgleichen();auslagernBald();
 (function(){if(window.mxAnschrift)return;
   const desc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value");
   const st=document.createElement("style");st.textContent=".mxAZ{display:grid;grid-template-columns:minmax(90px,32%) 1fr;gap:10px}.mxAZ>div{min-width:0}.mxAZ input{width:100%;box-sizing:border-box}";document.head.appendChild(st);
-  function teile(v,voll){v=String(v||"").trim();let s="",p="",o="";const m=v.match(/^(.*?)[,\s]*(\d{5})\s+(.+)$/);
+  function teile(v,voll){v=String(v||"").trim();let s="",p="",o="";const m=v.match(/^(.*?)[,\s]*(\d{4,5})\s+(.+)$/);   // 4 Stellen: Österreich, Schweiz (10.11.2026)
     if(m){s=m[1].trim().replace(/,$/,"");p=m[2];o=m[3].trim()}else if(voll&&/\d/.test(v))s=v;else o=v.replace(/^,\s*/,"");return{s,p,o}}   // ohne Hausnummer ist es ein Ort (31.10.2026)
   function setzen(inp){if(inp.dataset.mxA)return;inp.dataset.mxA="1";const voll=inp.dataset.anschrift!=="plzort";
     const lab=inp.previousElementSibling&&inp.previousElementSibling.tagName==="LABEL"?inp.previousElementSibling:null;
