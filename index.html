@@ -324,7 +324,7 @@ html body .buGk,html body .alK,html body .uGk,html body h2.hT,html body #s_unter
   <div class="karte"><h2>Neue Aufgabe</h2>
     <div class="neu"><input id="neuAufgabe" placeholder="Was ist zu tun?"><button id="neuLos">+</button></div>
     <div class="chips" id="neuBis"><div class="chip" data-t="0">heute</div><div class="chip" data-t="1">morgen</div><div class="chip" data-t="7">in 1 Woche</div><div class="chip" data-t="">kein Datum</div></div>
-    <div class="leer" style="padding:6px 0 0;text-align:left">Steht in 15 Minuten auch in der Excel (Reiter Aufgaben).</div></div>
+    <div class="leer" style="padding:6px 0 0;text-align:left">Wird auf allen Geräten gespeichert.</div></div>
   <div class="karte versteckt" id="termineKarte"><h2>Termine in den nächsten 30 Tagen</h2><div id="termine"></div></div>
   <div class="karte"><h2>Offene Aufgaben</h2><div id="aufgaben"></div></div>
 </section>
@@ -361,7 +361,7 @@ function termin(name,datum,feld,auto){const t=tageBis(datum),da=' data-feld="'+f
 function garantieZeile(a,auto){const t=tageBis(a.garantie),ue=a.garantieUeber?", über "+a.garantieUeber:"",da=' data-feld="garantie" data-auto="'+esc(auto)+'"';
   if(t===null)return'<div class="zeile tipp"'+da+'><span>Garantie</span><span class="wert">'+(ue?'<span class="grau">Datum fehlt'+esc(ue)+'</span>':'<span class="eintr">eintragen</span>')+'<span class="pf">›</span></span></div>';
   const k=t<=30?"rot":"";return'<div class="zeile tipp"'+da+'><span>Garantie</span><span class="wert"><b class="'+k+'">'+(t<0?"abgelaufen am "+de(a.garantie):"bis "+de(a.garantie)+(t<=30?" ("+tagWort(t,a.garantie,true)+")":""))+esc(ue)+'</b><span class="pf">›</span></span></div>'}
-// Termin eintragen (31.10.2026, Baran: "nebendran ein Eintragefeld"): geht sofort aufs Handy und über die Brücke in die Excel
+// Termin eintragen (31.10.2026, Baran: "nebendran ein Eintragefeld"): geht sofort auf alle Geräte (seit 16.11.2026 ohne Excel)
 const TNAME={tuev:"TÜV",service:"Service",reifen:"Reifen",garantie:"Garantie",km:"Kilometerstand",notiz:"Notiz"};let T_AUTO="",T_FELD="";
 let T_AUFG="";
 // Angefangen getippt im Termin-Fenster bleibt je Auto und Art (oder je Aufgabe), auch bei ✕, Zurück und Neuladen (Prüfung 10.11.2026)
@@ -389,12 +389,12 @@ function terminAuf(auto,feld){T_AUFG="";T_AUTO=auto;T_FELD=feld;const a=lies("mi
   $("tWeg").classList.toggle("versteckt",!a[feld]&&!(feld==="garantie"&&a.garantieUeber));tEntHolen();mxAuf("fTermin")}
 function terminSpeichern(loeschen){
   if(T_AUFG){const d=$("tDatum").value;if(!d){meldung("Bitte ein Datum wählen",true);return}const l=lies("mietixAufgaben",[]),a=l.find(x=>x.id===T_AUFG);
-    if(a){a.bis=d;a.bisNeu={bis:d,am:new Date().toISOString()};schreib("mietixAufgaben",l)}tEntWeg();T_AUFG="";mxZu();zeichneAufgaben();meldung("✓ Verschoben auf "+de(d)+", kommt auch in die Excel");return}
+    if(a){a.bis=d;a.bisNeu={bis:d,am:new Date().toISOString()};schreib("mietixAufgaben",l)}tEntWeg();T_AUFG="";mxZu();zeichneAufgaben();meldung("✓ Verschoben auf "+de(d));return}
   const st=lies("mietixAutos",{}),a=Object.assign({},st[T_AUTO]||{}),neu={};
   const art=$("fTermin").dataset.art;neu[T_FELD]=loeschen?"":art==="zahl"?String(Math.max(zahl($("tZahl").value)||0,0)||""):art==="text"?$("tText").value.trim():$("tDatum").value;if(T_FELD==="garantie")neu.garantieUeber=loeschen?"":$("tUeber").value.trim();
   if(!loeschen&&!neu[T_FELD]&&!(T_FELD==="garantie"&&neu.garantieUeber)){meldung(art==="zahl"?"Bitte den Kilometerstand eintragen":art==="text"?"Bitte etwas eintragen":"Bitte ein Datum wählen",true);return}
   Object.assign(a,neu);a.handy=Object.assign({},a.handy||{},neu,{am:new Date().toISOString()});st[T_AUTO]=a;schreib("mietixAutos",st);
-  tEntWeg();mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert, kommt auch in die Excel")}
+  tEntWeg();mxZu();zeichneAutos();meldung(loeschen?TNAME[T_FELD]+" gelöscht":"✓ "+TNAME[T_FELD]+" gespeichert")}
 // Termine, Kilometerstand und Notiz nach dem Antippen: das Fenster passt sich an (Datum, Zahl oder Text)
 // Liste und Detailansicht (01.11.2026, Baran): eine Zeile pro Auto, antippen öffnet alle Felder dieses Autos
 let AUTO_OFFEN="",AUTO_WUNSCH=new URLSearchParams(location.search).get("auto")||"",LISTE_Y=0;
@@ -1007,7 +1007,7 @@ let warte=null;
 // Ohne Anmeldung gespeichert (12.11.2026): einmal je Seite ein roter Hinweis, damit es niemand übersieht. Nur auf der echten Seite, nicht im Test.
 let ohneGemeldet=false;
 function ohneAnmeldung(){if(ohneGemeldet||!/github\.io$/.test(location.hostname))return;ohneGemeldet=true;
-  setTimeout(()=>{const t="Nicht gesichert: Dieses Gerät ist nicht angemeldet. Was hier gespeichert wird, fehlt auf den anderen Geräten und in der Excel. Bitte auf der Startseite anmelden.";
+  setTimeout(()=>{const t="Nicht gesichert: Dieses Gerät ist nicht angemeldet. Was hier gespeichert wird, fehlt auf den anderen Geräten. Bitte auf der Startseite anmelden.";
     if(window.mxFehler)mxFehler(t);else alert(t)},300)}
 Storage.prototype.setItem=function(k,v){if(this===localStorage&&WACHE[k]&&typeof v==="string"&&!rueckLaeuft&&!EIGEN)v=altSchutz(k,v);
   const alt=(this===localStorage&&SPEICHER[k])?localStorage.getItem(k):null;roh.call(this,k,v);if(this===localStorage&&WACHE[k])GESEHEN[k]=v;
@@ -1023,7 +1023,7 @@ Storage.prototype.setItem=function(k,v){if(this===localStorage&&WACHE[k]&&typeof
 const NAMEN={mietixVorgaenge:"Mietvertrag",mietixAnfragen:"Anfrage",mietixKunden:"Kunde",mietixFahrzeuge:"Fahrzeug",mietixAusgaben:"Ausgabe",
   mietixSperren:"Sperre",mietixAufgaben:"Aufgabe",mietixZustand:"Zustand",mietixAutos:"Auto"};
 const BESCHRIFTUNG={mietixVorgaenge:x=>"Mietvertrag "+(x.nr||"")+" "+(x.name||""),mietixAnfragen:x=>"Anfrage "+(x.name||"")+(x.auto?", "+x.auto:""),
-  mietixAusgaben:x=>"Ausgabe "+(x.betrag!=null?(isNaN(+x.betrag)?String(x.betrag).replace(/\s*€\s*$/,""):(+x.betrag).toLocaleString("de-DE",{maximumFractionDigits:2}))+" €":"")+(x.art?", "+String(x.art).trim():"")+(x.auto?", "+x.auto:""),
+  mietixAusgaben:x=>(x.rein?"Einnahme ":"Ausgabe ")+(x.betrag!=null?(isNaN(+x.betrag)?String(x.betrag).replace(/\s*€\s*$/,""):(+x.betrag).toLocaleString("de-DE",{maximumFractionDigits:2}))+" €":"")+(x.art?", "+String(x.art).trim():"")+(x.auto?", "+x.auto:""),
   mietixSperren:x=>"Sperre "+(x.auto||"")+(x.von?" ab "+x.von.split("-").reverse().join("."):""),mietixAufgaben:x=>"Aufgabe "+(x.aufgabe||""),
   mietixZustand:x=>"Zustand "+(x.auto||"")+": "+(x.text||"")};
 let burst=null,burstZeit=null;
