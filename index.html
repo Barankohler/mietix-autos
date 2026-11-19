@@ -425,6 +425,86 @@ html.nxNeu.auNeu #auMeld{position:fixed;left:16px;right:16px;bottom:24px;z-index
   background:var(--rg-karte);border:1px solid var(--rg-rand);color:var(--rg-text);font-size:15px;font-weight:500}
 html.nxNeu.auNeu #auMeld span{flex:1;min-width:0}
 html.nxNeu.auNeu #auMeld button{flex:0 0 auto;min-height:44px;padding:0 14px;border:0;border-radius:var(--rg-r-feld);background:var(--rg-grau-h);color:var(--rg-text);font:inherit;font-size:13px;font-weight:500;cursor:pointer}
+</style><style id="rfStil">/* Autos: Reifen (tools/autos/autos_reifen.py) */
+html:not(.auNeu) [data-rf]{display:none!important}
+/* ---------- Auto-Karte: Bereich Reifen ---------- */
+html.nxNeu.auNeu #autos .auGrR .rfZ{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:3px;align-items:center;width:100%;min-height:56px;box-sizing:border-box;margin:0;
+  padding:11px 12px;border:0;border-top:1px solid var(--rg-linie);border-radius:0;background:transparent;font:inherit;font-size:15px;line-height:1.35;font-weight:400;color:var(--rg-text);
+  text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;appearance:none}
+html.nxNeu.auNeu #autos .auGrR>:first-child{border-top:0}
+html.nxNeu.auNeu #autos .auGrR .rfZ:active,html.nxNeu.auNeu #autos .auGrR .rfRadK:active{background:var(--rg-grau-h)}
+html.nxNeu.auNeu #autos .auGrR .rfLab{grid-column:1;grid-row:1;white-space:nowrap}
+html.nxNeu.auNeu #autos .auGrR .rfWert{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;text-align:right}
+html.nxNeu.auNeu #autos .auGrR .rfWert>b{font-weight:500;min-width:0;overflow-wrap:anywhere;word-break:break-word}
+html.nxNeu.auNeu #autos .auGrR .rfGr{display:block;white-space:nowrap}
+html.nxNeu.auNeu #autos .auGrR .rfGr small,html.nxNeu.auNeu #autos .auGrR .rfWert small{font-size:13px;font-weight:400;color:var(--rg-t2);margin-right:6px}
+html.nxNeu.auNeu #autos .auGrR .rfWert small.rfNach{display:block;margin:1px 0 0}
+html.nxNeu.auNeu #autos .auGrR .rfLeer{color:var(--rg-t2)}
+html.nxNeu.auNeu #autos .auGrR .rfPf,html.nxNeu.auNeu #rfUeb .rfPf{font-style:normal;font-size:17px;line-height:1;color:var(--rg-t3);flex:0 0 auto}
+html.nxNeu.auNeu #autos .auGrR .rfStat{grid-column:1/3;grid-row:2;font-size:13px;line-height:1.35}
+html.nxNeu.auNeu #autos .auGrR em,html.nxNeu.auNeu #rfUeb em{font-style:normal}
+html.nxNeu.auNeu .rfGelb{color:var(--rg-gelb)!important}
+html.nxNeu.auNeu .rfRot{color:var(--rg-rot-d)!important}
+html.nxNeu.auNeu .rfGruen{color:var(--rg-gruen)!important}
+/* Auto von oben: links die linken Räder, rechts die rechten, vorne oben */
+html.nxNeu.auNeu #autos .auGrR .rfSchemaZ{padding:12px 12px 10px;border-top:1px solid var(--rg-linie)}
+html.nxNeu.auNeu #autos .auGrR .rfKap{display:flex;justify-content:space-between;gap:8px;font-size:13px;line-height:1.35;color:var(--rg-t2);margin:0 0 6px}
+html.nxNeu.auNeu #autos .auGrR .rfSchema{display:grid;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);column-gap:8px;row-gap:6px;align-items:stretch}
+html.nxNeu.auNeu #autos .auGrR .rfBild{grid-column:2;grid-row:2/4;align-self:center;width:52px;height:112px;display:block}
+html.nxNeu.auNeu #autos .auGrR .rfBild .rfKar{fill:var(--rg-karte);stroke:var(--rg-t3);stroke-width:1.5}
+html.nxNeu.auNeu #autos .auGrR .rfBild .rfLin{fill:none;stroke:var(--rg-t3);stroke-width:1.5;stroke-linecap:round}
+html.nxNeu.auNeu #autos .auGrR .rfBild .rfRad{fill:var(--rg-t2)}
+html.nxNeu.auNeu #autos .auGrR .rfBild .rfRad.rfLeerR{fill:var(--rg-t3)}
+html.nxNeu.auNeu #autos .auGrR .rfBild .rfRad.rfGelb{fill:var(--rg-gelb)}
+html.nxNeu.auNeu #autos .auGrR .rfBild .rfRad.rfRot{fill:var(--rg-rot)}
+html.nxNeu.auNeu #autos .auGrR .rfRadK{display:flex;flex-direction:column;justify-content:center;gap:1px;min-height:64px;min-width:0;box-sizing:border-box;margin:0;padding:6px 4px;border:0;border-radius:var(--rg-r-feld);
+  background:transparent;font:inherit;font-size:13px;line-height:1.3;color:var(--rg-t2);cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;appearance:none}
+html.nxNeu.auNeu #autos .auGrR .rfRadK.rfL{grid-column:1;text-align:right;align-items:flex-end}
+html.nxNeu.auNeu #autos .auGrR .rfRadK.rfR{grid-column:3;text-align:left;align-items:flex-start}
+html.nxNeu.auNeu #autos .auGrR .rfRadK.rfV{grid-row:2}
+html.nxNeu.auNeu #autos .auGrR .rfRadK.rfH{grid-row:3}
+html.nxNeu.auNeu #autos .auGrR .rfVorn{grid-column:2;grid-row:1;text-align:center;font-size:12px;line-height:1.35;color:var(--rg-t2)}
+html.nxNeu.auNeu #autos .auGrR .rfRadK small{font-size:12px;letter-spacing:.02em;color:var(--rg-t2)}
+html.nxNeu.auNeu #autos .auGrR .rfRadK b{font-size:17px;line-height:1.3;font-weight:500;color:var(--rg-text);white-space:nowrap}
+html.nxNeu.auNeu #autos .auGrR .rfRadK b.rfLeer{font-size:15px;font-weight:400;color:var(--rg-t2)}
+html.nxNeu.auNeu #autos .auGrR .rfRadK span{display:block;overflow-wrap:anywhere}
+html.nxNeu.auNeu #autos .auGrR .rfProb{margin:8px 0 0;font-size:13px;line-height:1.4}
+html.nxNeu.auNeu #autos .auGrR .rfProb em{display:block}
+/* ---------- Seite Autos: Übersicht Reifen unter der Liste ---------- */
+html.nxNeu.auNeu #rfUeb{margin:0 0 8px}
+html.nxNeu.auNeu #rfUeb .rfBez{margin:22px 4px 6px;font-size:12px;line-height:1.35;font-weight:400;letter-spacing:.05em;color:var(--rg-t2)}
+html.nxNeu.auNeu #rfUeb .rfUGr{background:var(--rg-karte);border:1px solid var(--rg-rand);border-radius:var(--rg-r-karte);overflow:hidden}
+html.nxNeu.auNeu #rfUeb .rfSum{padding:12px 12px 13px;min-height:56px;box-sizing:border-box}
+html.nxNeu.auNeu #rfUeb .rfSum b{display:block;font-size:17px;line-height:1.35;font-weight:500;color:var(--rg-text)}
+html.nxNeu.auNeu #rfUeb .rfSum span{display:block;margin-top:2px;font-size:13px;line-height:1.4;color:var(--rg-t2)}
+html.nxNeu.auNeu #rfUeb .rfUZ{display:grid;grid-template-columns:minmax(0,1fr) auto 14px;column-gap:10px;align-items:center;width:100%;min-height:56px;box-sizing:border-box;margin:0;padding:11px 12px;
+  border:0;border-top:1px solid var(--rg-linie);border-radius:0;background:transparent;font:inherit;text-align:left;color:var(--rg-text);cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;appearance:none}
+html.nxNeu.auNeu #rfUeb .rfUZ:active{background:var(--rg-grau-h)}
+html.nxNeu.auNeu #rfUeb .rfUT{min-width:0}
+html.nxNeu.auNeu #rfUeb .rfUT b{display:block;font-size:15px;line-height:1.35;font-weight:500;overflow-wrap:anywhere;word-break:break-word}
+html.nxNeu.auNeu #rfUeb .rfUT i{display:block;font-style:normal;font-size:13px;line-height:1.35;color:var(--rg-t2);margin-top:1px;overflow-wrap:anywhere}
+html.nxNeu.auNeu #rfUeb .rfUT em{display:block;font-size:12px;line-height:1.35;margin-top:2px;color:var(--rg-t2)}
+html.nxNeu.auNeu #rfUeb .rfUR{font-size:13px;font-weight:500;color:var(--rg-text);white-space:nowrap}
+html.nxNeu.auNeu #rfUeb .rfUR.rfLeer{font-weight:400;color:var(--rg-t2)}
+html.nxNeu.auNeu #rfUeb .rfHinw{margin:12px 0 4px;text-align:center;font-size:13px;color:var(--rg-t2)}
+/* ---------- Blatt zum Ändern ---------- */
+html.nxNeu.auNeu #rfF .rfFU{font-size:13px;color:var(--rg-t2);margin:-4px 0 2px}
+html.nxNeu.auNeu #rfF .rfFL{display:block;font-size:13px;font-weight:400;color:var(--rg-t2);margin:14px 0 6px}
+html.nxNeu.auNeu #rfF .rfIn{display:block;width:100%;box-sizing:border-box;height:48px;margin:0;padding:0 14px;border:1px solid transparent;border-radius:var(--rg-r-feld);background:var(--rg-grau-h);
+  font:inherit;font-size:16px;font-weight:400;color:var(--rg-text);-webkit-appearance:none;appearance:none;min-width:0}
+html.nxNeu.auNeu #rfF .rfIn:focus{outline:0;background:var(--rg-karte);border-color:var(--rg-rot)}
+html.nxNeu.auNeu #rfF .rfWahl{display:flex;gap:2px;padding:2px;border-radius:10px;background:var(--rg-spur)}
+html.nxNeu.auNeu #rfF .rfWahl button{flex:1 1 0;min-width:0;min-height:44px;margin:0;padding:0 6px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:15px;font-weight:400;color:var(--rg-t2);cursor:pointer}
+html.nxNeu.auNeu #rfF .rfWahl button.an{background:var(--rg-karte);color:var(--rg-text);font-weight:500}
+html.nxNeu.auNeu #rfF .rfZwei{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+html.nxNeu.auNeu #rfF .rfZwei .rfFL{margin-top:6px}
+html.nxNeu.auNeu #rfF .rfRadT{font-size:15px;font-weight:500;color:var(--rg-text);margin:16px 0 0}
+html.nxNeu.auNeu #rfF .rfFHinw{margin:10px 0 0;padding:10px 12px;border-radius:var(--rg-r-feld);background:var(--rg-gelb-h);color:var(--rg-gelb);font-size:13px;line-height:1.4}
+html.nxNeu.auNeu #rfF .rfFNot{margin:8px 0 0;font-size:13px;line-height:1.4;color:var(--rg-t2)}
+html.nxNeu.auNeu #rfF .rfFehler{margin:10px 0 0;font-size:13px;line-height:1.4;color:var(--rg-rot-d)}
+html.nxNeu.auNeu #rfF .rfFehler[hidden],html.nxNeu.auNeu #rfF [hidden]{display:none!important}
+html.nxNeu.auNeu #rfF .tOk{display:block;width:100%;min-height:52px;margin:20px 0 0;border:0;border-radius:var(--rg-r-karte);background:var(--rg-rot);color:var(--rg-karte);font:inherit;font-size:17px;font-weight:500;cursor:pointer}
+html.nxNeu.auNeu #rfF .tWeg{display:block;width:100%;min-height:44px;margin:6px 0 0;border:0;background:transparent;color:var(--rg-t2);font:inherit;font-size:15px;font-weight:500;cursor:pointer}
 </style></head><body><script>
 /* Knopf-Paar je Nachricht: WhatsApp und Kopieren (02.11.2026) */
 (function(){if(window.nkPaar)return;
@@ -1905,4 +1985,181 @@ function schmuecken(){if(!an())return;
   if(k&&n&&!k.classList.contains("auKzAend")){k.classList.add("auKzAend");k.setAttribute("role","button");k.setAttribute("aria-label","Kennzeichen und FIN ändern");k.onclick=()=>kzAuf(n)}}
 try{schmuecken();new MutationObserver(()=>{try{schmuecken()}catch(e){}}).observe(box,{childList:true});
   new MutationObserver(()=>{if(!an()){const m=document.getElementById("auMeld");if(m)m.remove()}}).observe(H,{attributes:true,attributeFilter:["class"]});window.auAendLaeuft=1}catch(e){}
+})();</script><script>/* Autos: Reifen (tools/autos/autos_reifen.py, 18.11.2026) */
+(function(){const H=document.documentElement,box=document.getElementById("autos");
+if(!box||typeof zeichneAutos!=="function"||typeof lies!=="function"||typeof schreib!=="function"||typeof autoAuf!=="function")return;
+const an=()=>H.classList.contains("auNeu")&&H.classList.contains("nxNeu")&&!window.rfKaputt;
+const e_=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const nk=s=>String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const datDe=s=>s?String(s).slice(0,10).split("-").reverse().join("."):"";
+// Papierliste „Reifenliste Umstellung Sommer zu Winter 2026“ vom 17.11.2026, Zuordnung über das Kennzeichen
+const VOR_AM="2026-11-17";
+const VOR={WIXQ8:{vorne:"295/35 R23",rundum:true,art:"sommer",lager:"nein",bestellen:4},
+  WIMX880:{vorne:"235/35 R19",rundum:true,art:"winter",pVL:6,pVR:6,pHL:5,pHR:5},
+  WIK2121:{vorne:"235/30 R22",hinten:"285/30 R22",rundum:false,hinweis:"Vorne bitte am Fahrzeug prüfen, Audi verbaut meist 285/30 R22 rundum.",art:"sommer",lager:"nein",bestellen:4},
+  WIMX620:{vorne:"245/30 R20",hinten:"295/30 R20",rundum:false,art:"winter"},
+  WIMX881:{vorne:"205/55 R16",rundum:true,hinweis:"Vermutlich rundum, bitte prüfen.",art:"sommer"},
+  WISX580:{vorne:"255/35 R21",hinten:"285/30 R21",rundum:false,hinweis:"Vorne bitte prüfen.",art:"sommer"},
+  WIBM850:{vorne:"245/40 R19",hinten:"275/35 R19",rundum:false,art:"sommer"},
+  WIMX450:{vorne:"265/30 R19",hinten:"245/35 R19",rundum:false,art:"sommer"}};
+const RAD=["VL","VR","HL","HR"],POS={VL:"vorne links",VR:"vorne rechts",HL:"hinten links",HR:"hinten rechts"};
+const ART={sommer:"Sommer",winter:"Winter",ganzjahr:"Ganzjahr"};
+const leer=v=>v===undefined||v===null||v==="";
+const stamm=()=>{const s=lies("mietixAutos",{});return s&&typeof s==="object"?s:{}};
+// Was gilt: Gespeichertes; ohne Merker „vorbelegt“ füllt die Papierliste nur die leeren Felder (nur angezeigt, nicht geschrieben)
+function satz(n){const a=stamm()[n]||{},s=a.reifenSatz&&typeof a.reifenSatz==="object"&&!Array.isArray(a.reifenSatz)?a.reifenSatz:{};
+  const v=!s.vorbelegt&&VOR[nk(a.kz)];if(!v)return Object.assign({},s);
+  const w=Object.assign({geprueftAm:VOR_AM,geprueftVon:"Baran"},v);Object.keys(s).forEach(k=>{if(!leer(s[k]))w[k]=s[k]});return w}
+window.rfSatz=satz;
+// Zeit: Winterreifen von Oktober bis Ostern (O bis O)
+function ostern(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,
+  l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),x=h+l-7*m+114;return new Date(y,Math.floor(x/31)-1,x%31+1,23,59,59)}
+const winterZeit=()=>{const d=new Date();return d.getMonth()>=9||d<=ostern(d.getFullYear())};
+const zahlW=v=>{if(leer(v))return null;const n=typeof v==="number"?v:parseFloat(String(v).trim().replace(",","."));return isNaN(n)?null:n};
+const mm=n=>n.toLocaleString("de-DE",{minimumFractionDigits:1,maximumFractionDigits:1})+" mm";
+// DOT: 4 Ziffern, Woche und Jahr (2423 = Woche 24, 2023)
+function dotDatum(s){s=String(s==null?"":s).trim();if(!/^\d{4}$/.test(s))return null;const w=+s.slice(0,2),j=2000+ +s.slice(2);if(w<1||w>53)return null;
+  const d=new Date(j,0,4,12);d.setDate(d.getDate()-((d.getDay()+6)%7)+(w-1)*7);return d}
+const alterJ=s=>{const d=dotDatum(s);return d?(new Date()-d)/(365.2425*864e5):null};
+const alterT=j=>j<1?"unter 1 Jahr":Math.floor(j)===1?"1 Jahr":Math.floor(j)+" Jahre";
+const grenze=w=>w.art==="winter"||w.art==="ganzjahr"?4:3;
+function profilStufe(w,r){const p=zahlW(w["p"+r]);if(p===null)return"";return p<1.6?"rot":p<grenze(w)?"gelb":""}
+function dotStufe(w,r){const j=alterJ(w["d"+r]);if(j===null)return"";return j>8?"rot":j>6?"gelb":""}
+const KL={rot:"rfRot",gelb:"rfGelb"};
+function hinweise(w){const l=[];
+  if(winterZeit()&&w.art==="sommer")l.push({s:"gelb",k:"winter",t:w.lager==="ja"&&w.lagerArt==="winter"?"Winterreifen aufziehen":"Winterreifen fehlen"});
+  RAD.forEach(r=>{const s=profilStufe(w,r);if(s)l.push({s,k:"profil",kurz:s==="rot"?"nicht fahren":"bald wechseln",t:POS[r]+" "+mm(zahlW(w["p"+r]))+": "+(s==="rot"?"nicht fahren":"bald wechseln")})});
+  RAD.forEach(r=>{const s=dotStufe(w,r);if(s)l.push({s,k:"dot",kurz:s==="rot"?"Reifen zu alt":"Reifen bald ersetzen",t:POS[r]+" DOT "+w["d"+r]+", "+alterT(alterJ(w["d"+r]))+": "+(s==="rot"?"zu alt":"bald ersetzen")})});
+  const b=zahlW(w.bestellen);if(b>0)l.push({s:"gelb",k:"bestellen",t:b+" neu bestellen"});
+  return l.sort((x,y)=>(x.s==="rot"?0:1)-(y.s==="rot"?0:1))}
+window.rfHinweise=n=>hinweise(satz(n));
+const istLeer=w=>!["vorne","hinten","marke","art","lager","bestellen"].concat(RAD.map(r=>"p"+r),RAD.map(r=>"d"+r)).some(k=>!leer(w[k]));
+
+/* ---------- Auto-Karte ---------- */
+const BILD='<svg class="rfBild" viewBox="0 0 52 112" aria-hidden="true"><rect class="rfKar" x="9" y="3" width="34" height="106" rx="14"/><path class="rfLin" d="M14 33 Q26 26 38 33"/><path class="rfLin" d="M15 86 Q26 91 37 86"/>'+
+  '__R__</svg>';
+const RADPOS={VL:[2,17],VR:[43,17],HL:[2,73],HR:[43,73]};
+function karteHtml(n){const w=satz(n),h=hinweise(w);
+  const z=(blatt,lab,wert,stat)=>'<button type="button" class="rfZ" data-rfblatt="'+blatt+'"><span class="rfLab">'+lab+'</span><span class="rfWert">'+(wert?'<b>'+wert+'</b>':'<span class="rfLeer">eintragen</span>')+'<i class="rfPf">›</i></span>'+(stat?'<span class="rfStat">'+stat+'</span>':"")+'</button>';
+  const win=h.find(x=>x.k==="winter");
+  let o=z("art","Drauf",w.art&&ART[w.art]?ART[w.art]+"reifen":"",win?'<em class="rfGelb">'+win.t+'</em>':"");
+  let gw="";if(w.vorne||w.hinten)gw=w.rundum?'<span class="rfGr">'+e_(w.vorne||w.hinten)+'</span> <small class="rfNach">rundum</small>':'<span class="rfGr"><small>vorne</small> '+e_(w.vorne||"fehlt")+'</span> <span class="rfGr"><small>hinten</small> '+e_(w.hinten||"fehlt")+'</span>';
+  o+=z("groesse","Größe",gw,w.hinweis?'<em class="rfGelb">'+e_(w.hinweis)+'</em>':"");
+  o+=z("marke","Marke",e_([w.marke,w.modell].filter(Boolean).join(" ")),"");
+  // Auto von oben
+  const rad=r=>{const p=zahlW(w["p"+r]),d=String(w["d"+r]||""),ps=profilStufe(w,r),ds=dotStufe(w,r),j=alterJ(d);
+    return'<button type="button" class="rfRadK '+(r[1]==="L"?"rfL":"rfR")+" "+(r[0]==="V"?"rfV":"rfH")+'" data-rfrad="'+r+'"><small>'+POS[r]+'</small>'+
+      (p===null?'<b class="rfLeer">eintragen</b>':'<b class="'+(KL[ps]||"")+'">'+mm(p)+'</b>')+
+      (d?'<span>DOT '+e_(d)+'</span>'+(j!==null?'<span class="'+(KL[ds]||"")+'">'+alterT(j)+'</span>':''):(p!==null?'<span>DOT fehlt</span>':''))+'</button>'};
+  const radBild=RAD.map(r=>{const s=profilStufe(w,r)==="rot"||dotStufe(w,r)==="rot"?"rot":profilStufe(w,r)||dotStufe(w,r)?"gelb":"",le=zahlW(w["p"+r])===null;
+    return'<rect class="rfRad '+(s?KL[s]:le?"rfLeerR":"")+'" x="'+RADPOS[r][0]+'" y="'+RADPOS[r][1]+'" width="7" height="22" rx="3"/>'}).join("");
+  const prob=h.filter(x=>x.k==="profil"||x.k==="dot");
+  o+='<div class="rfSchemaZ"><div class="rfKap"><span>Profil und DOT</span></div><div class="rfSchema"><span class="rfVorn">vorne</span>'+rad("VL")+BILD.replace("__R__",radBild)+rad("VR")+rad("HL")+rad("HR")+'</div>'+
+    (prob.length?'<div class="rfProb">'+prob.map(x=>'<em class="'+KL[x.s]+'">'+e_(x.t.charAt(0).toUpperCase()+x.t.slice(1))+'</em>').join("")+'</div>':'')+'</div>';
+  const la=w.lager==="ja"?(ART[w.lagerArt]?ART[w.lagerArt]+"reifen":"ja"):w.lager==="nein"?"nein":"";
+  o+=z("lager","Eingelagert",la,"");
+  const b=zahlW(w.bestellen);
+  o+=z("bestellen","Neu bestellen",b===null?"":b>0?'<span class="rfGelb">'+b+' Stück</span>':"nein","");
+  o+=z("geprueft","Geprüft",e_([datDe(w.geprueftAm),w.geprueftVon].filter(Boolean).join(", ")),"");
+  return o}
+function karte(){const k=box.querySelector(":scope>.karte.auto.auKarte");if(!k)return;const n=k.dataset.auto;if(!n||!stamm()[n])return;
+  let gr=k.querySelector(":scope>.auGrR");
+  if(!gr){const m=k.querySelector(":scope>.auGrM");const bz=document.createElement("div");bz.className="auBez auBezR";bz.setAttribute("data-nxzusatz","au");bz.setAttribute("data-rf","");bz.textContent="Reifen";
+    gr=document.createElement("div");gr.className="auGr auGrR";gr.setAttribute("data-nxzusatz","au");gr.setAttribute("data-rf","");k.insertBefore(bz,m||null);k.insertBefore(gr,m||null)}
+  const html=karteHtml(n);if(gr.dataset.rfStand===html)return;gr.innerHTML=html;gr.dataset.rfStand=html;
+  gr.querySelectorAll("[data-rfblatt]").forEach(x=>x.onclick=()=>blatt(n,x.dataset.rfblatt));
+  gr.querySelectorAll("[data-rfrad]").forEach(x=>x.onclick=()=>blatt(n,"profil",x.dataset.rfrad))}
+
+/* ---------- Übersicht unter der Liste ---------- */
+let ZIEL="";
+function uebersicht(){let u=document.getElementById("rfUeb");
+  let aktiv=false;try{aktiv=!!(typeof AUTO_LK!=="undefined"&&AUTO_LK.aktiv&&AUTO_LK.aktiv())}catch(e){}
+  const zeigen=an()&&!box.querySelector(":scope>.karte.auto")&&!!box.querySelector(":scope>.aListe")&&!aktiv;
+  if(!zeigen){if(u)u.remove();return}
+  const st=stamm(),namen=[...box.querySelectorAll(":scope>.aListe>.aZeile[data-oeffne]")].map(z=>z.dataset.oeffne).filter(n=>st[n]);
+  const zeilen=namen.map((n,i)=>{const w=satz(n),h=hinweise(w);return{n,i,w,h,leer:istLeer(w),rang:h.some(x=>x.s==="rot")?0:h.length?1:istLeer(w)?3:2}}).sort((a,b)=>a.rang-b.rang||a.i-b.i);
+  const winter=zeilen.filter(z=>z.h.some(x=>x.k==="winter")).length,rot=zeilen.filter(z=>z.rang===0).length,stueck=zeilen.reduce((s,z)=>s+(zahlW(z.w.bestellen)>0?zahlW(z.w.bestellen):0),0),ohne=zeilen.filter(z=>z.leer).length;
+  const titel=winterZeit()?(winter?winter+(winter===1?" Auto braucht":" Autos brauchen")+" Winterreifen":"Kein Auto fährt mit Sommerreifen"):rot?rot+(rot===1?" Auto darf":" Autos dürfen")+" so nicht fahren":"Reifen ohne Hinweis";
+  const unter=[rot&&winterZeit()?'<em class="rfRot">'+rot+(rot===1?" Auto darf":" Autos dürfen")+' so nicht fahren</em>':"",stueck?'<em class="rfGelb">'+stueck+' Reifen neu bestellen</em>':"",
+    ohne?ohne+(ohne===1?" Auto noch ohne Reifendaten":" Autos noch ohne Reifendaten"):"",winterZeit()?"Von Oktober bis Ostern gehören Winterreifen drauf.":""].filter(Boolean).join(". ").replace(/\.\./g,".");
+  const zeile=z=>{const w=z.w,ps=RAD.map(r=>zahlW(w["p"+r])).filter(x=>x!==null),js=RAD.map(r=>alterJ(w["d"+r])).filter(x=>x!==null),kz=(st[z.n]||{}).kz||"";
+    const teil=[kz];if(z.leer)teil.push("noch nichts eingetragen");else{
+      if(ps.length)teil.push("kleinstes Profil "+mm(Math.min(...ps)));if(js.length)teil.push("ältester Reifen "+alterT(Math.max(...js)));
+      teil.push(w.lager==="ja"?(ART[w.lagerArt]?ART[w.lagerArt]+"reifen eingelagert":"zweiter Satz eingelagert"):w.lager==="nein"?(w.art==="sommer"?"keine Winterreifen da":"nichts eingelagert"):"")}
+    const kurz=[];z.h.forEach(x=>{const t=x.kurz||x.t;if(!kurz.some(y=>y.t===t))kurz.push({t,s:x.s})});
+    return'<button type="button" class="rfUZ" data-rfauto="'+e_(z.n)+'"><span class="rfUT"><b>'+e_(z.n)+'</b><i>'+e_(teil.filter(Boolean).join(", "))+'</i>'+
+      (kurz.length?'<em>'+kurz.map(x=>'<span class="'+KL[x.s]+'">'+e_(x.t)+'</span>').join(", ")+'</em>':'')+'</span>'+
+      '<span class="rfUR'+(ART[w.art]?"":" rfLeer")+'">'+(ART[w.art]||"")+'</span><i class="rfPf">›</i></button>'};
+  const html='<div class="rfBez">Reifen</div><div class="rfUGr"><div class="rfSum"><b>'+e_(titel)+'</b>'+(unter?'<span>'+unter+'</span>':'')+'</div>'+zeilen.map(zeile).join("")+'</div><p class="rfHinw">Zeile antippen: Reifen des Autos öffnen.</p>';
+  if(!u){u=document.createElement("div");u.id="rfUeb";u.setAttribute("data-nxzusatz","au");u.setAttribute("data-rf","");box.after(u)}
+  if(u.dataset.rfStand===html)return;u.innerHTML=html;u.dataset.rfStand=html;
+  u.querySelectorAll("[data-rfauto]").forEach(b=>b.onclick=()=>{ZIEL=b.dataset.rfauto;autoAuf(b.dataset.rfauto);Promise.resolve().then(zumBereich)})}
+// nach dem Öffnen aus der Übersicht: der Bereich Reifen steht oben unter dem Kopf (noch vor dem Zeichnen, nichts springt)
+function zumBereich(){if(!ZIEL)return;ZIEL="";const b=box.querySelector(".auBezR");if(!b)return;const k=document.querySelector("header"),o=k?k.getBoundingClientRect().bottom:0;
+  window.scrollTo(0,Math.max(0,Math.round(b.getBoundingClientRect().top+window.scrollY-o-8)))}
+
+/* ---------- Blatt: ändern, „Übernehmen“, danach „Rückgängig“ (Regel 15, Regel 1) ---------- */
+let MT=null;
+function meld(text,zurueck){let m=document.getElementById("auMeld");if(m)m.remove();clearTimeout(MT);
+  m=document.createElement("div");m.id="auMeld";m.setAttribute("data-nxzusatz","au");m.setAttribute("role","status");
+  m.innerHTML='<span></span><button type="button">Rückgängig</button>';m.firstChild.textContent=text;document.body.appendChild(m);
+  m.querySelector("button").onclick=()=>{clearTimeout(MT);m.remove();zurueck()};MT=setTimeout(()=>{if(m.isConnected)m.remove()},8000)}
+function speichern(n,neu,text){const st=stamm();if(!st[n])return false;const alt=st[n].reifenSatz;const x=Object.assign({},st[n]);
+  const s=Object.assign({},neu);s.vorbelegt=s.vorbelegt||(VOR[nk(x.kz)]?VOR_AM:"nein");Object.keys(s).forEach(k=>{if(s[k]===undefined)delete s[k]});
+  x.reifenSatz=s;st[n]=x;schreib("mietixAutos",st);zeichneAutos();
+  meld(text,()=>{const s2=stamm();if(!s2[n])return;const y=Object.assign({},s2[n]);if(alt===undefined)delete y.reifenSatz;else y.reifenSatz=alt;s2[n]=y;schreib("mietixAutos",s2);zeichneAutos()});return true}
+function fenster(){let f=document.getElementById("rfF");
+  if(!f){f=document.createElement("div");f.className="mxFenster";f.id="rfF";f.setAttribute("role","dialog");f.setAttribute("data-nxzusatz","au");f.setAttribute("data-rf","");document.body.appendChild(f)}return f}
+const feld=(id,lab,wert,attr)=>'<label class="rfFL" for="'+id+'">'+lab+'</label><input class="rfIn" id="'+id+'" value="'+e_(leer(wert)?"":wert)+'" autocomplete="off" '+(attr||"")+'>';
+const wahl=(name,opts,wert)=>'<div class="rfWahl" role="group" data-rfwahl="'+name+'">'+opts.map(([v,t])=>'<button type="button" data-v="'+v+'"'+(String(wert)===v?' class="an"':'')+'>'+t+'</button>').join("")+'</div>';
+const ARTEN=[["sommer","Sommer"],["winter","Winter"],["ganzjahr","Ganzjahr"]];
+const ZAHL='inputmode="numeric" pattern="[0-9]*" enterkeyhint="done"';
+const mmText=v=>{const n=zahlW(v);return n===null?"":String(n).replace(".",",")};
+function blatt(n,art,rad){const w=satz(n),f=fenster();let titel="",inhalt="";
+  if(art==="art"){titel="Drauf";inhalt='<label class="rfFL">Welche Reifen sind gerade drauf?</label>'+wahl("art",ARTEN,w.art||"")}
+  else if(art==="groesse"){titel="Reifengröße";inhalt='<label class="rfFL">Vorne und hinten</label>'+wahl("rundum",[["1","rundum gleich"],["0","verschieden"]],w.rundum===false||(!w.rundum&&w.hinten&&w.hinten!==w.vorne)?"0":"1")+
+    feld("rfVorne",'<span data-rfrund>Größe</span><span data-rfgetr hidden>Vorne</span>',w.vorne,'placeholder="245/30 R20" autocapitalize="characters" spellcheck="false"')+
+    '<div data-rfgetr hidden>'+feld("rfHinten","Hinten",w.hinten,'placeholder="295/30 R20" autocapitalize="characters" spellcheck="false"')+'</div>'+
+    (w.hinweis?'<p class="rfFHinw">'+e_(w.hinweis)+'</p><p class="rfFNot">Mit „Übernehmen“ gilt die Größe als geprüft, der Hinweis fällt weg.</p>':'')}
+  else if(art==="marke"){titel="Reifenmarke";inhalt=feld("rfMarke","Marke",w.marke,'placeholder="zum Beispiel Michelin" autocapitalize="words"')+feld("rfModell","Modell (wenn bekannt)",w.modell,'placeholder="zum Beispiel Pilot Sport 4S" autocapitalize="words"')}
+  else if(art==="profil"){titel="Profil und DOT";inhalt='<p class="rfFNot">Profiltiefe in mm. DOT: die 4 Ziffern auf der Flanke, Woche und Jahr, zum Beispiel 2423.</p>'+
+    RAD.map(r=>'<div class="rfRadT">'+POS[r].charAt(0).toUpperCase()+POS[r].slice(1)+'</div><div class="rfZwei"><div>'+feld("rfP"+r,"Profil in mm",mmText(w["p"+r]),'inputmode="decimal" data-einheit="" placeholder="6,5" enterkeyhint="next"')+
+      '</div><div>'+feld("rfD"+r,"DOT",w["d"+r],ZAHL+' data-einheit="" maxlength="4" placeholder="2423"')+'</div></div>').join("")}
+  else if(art==="lager"){titel="Zweiter Satz";inhalt='<label class="rfFL">Ist ein zweiter Satz eingelagert?</label>'+wahl("lager",[["ja","ja"],["nein","nein"]],w.lager||"")+
+    '<div data-rflagerart'+(w.lager==="ja"?"":" hidden")+'><label class="rfFL">Welche Art liegt im Lager?</label>'+wahl("lagerArt",ARTEN,w.lagerArt||(w.art==="sommer"?"":""))+'</div>'}
+  else if(art==="bestellen"){titel="Neu bestellen";inhalt=feld("rfStueck","Wie viele Reifen neu bestellen?",zahlW(w.bestellen)===null?"":String(zahlW(w.bestellen)),ZAHL+' data-einheit="" maxlength="2" placeholder="0"')+wahl("stueck",[["0","keine"],["2","2"],["4","4"]],"")}
+  else if(art==="geprueft"){titel="Geprüft";inhalt=feld("rfAm","Geprüft am",w.geprueftAm,'type="date"')+feld("rfVon","Geprüft von",w.geprueftVon,'placeholder="Name" autocapitalize="words"')}
+  else return;
+  f.innerHTML='<div class="mxKopf"><h3></h3><button class="mxZu" type="button" aria-label="Schließen">✕</button></div><div class="rfFU"></div>'+inhalt+
+    '<p class="rfFehler" hidden></p><button class="tOk" type="button" id="rfOk">Übernehmen</button><button class="tWeg" type="button" id="rfWeg">Abbrechen</button>';
+  f.querySelector("h3").textContent=titel;f.querySelector(".rfFU").textContent=n;f.dataset.rfAuto=n;f.dataset.rfArt=art;
+  const W=nm=>{const g=f.querySelector('[data-rfwahl="'+nm+'"] .an');return g?g.dataset.v:""};
+  f.querySelectorAll("[data-rfwahl] button").forEach(b=>b.onclick=()=>{b.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("an",x===b));
+    const nm=b.parentNode.dataset.rfwahl;if(nm==="lager"){const la=f.querySelector("[data-rflagerart]");if(la)la.hidden=b.dataset.v!=="ja"}
+    if(nm==="rundum")getr();if(nm==="stueck"){const i=f.querySelector("#rfStueck");i.value=b.dataset.v==="0"?"0":b.dataset.v}});
+  const getr=()=>{const g=W("rundum")==="0";f.querySelectorAll("[data-rfgetr]").forEach(x=>x.hidden=!g);f.querySelectorAll("[data-rfrund]").forEach(x=>x.hidden=g)};if(art==="groesse")getr();
+  const fehler=t=>{const p=f.querySelector(".rfFehler");p.textContent=t;p.hidden=!t;return!t};
+  const gr=v=>String(v||"").trim().replace(/\s+/g," ").replace(/\s*\/\s*/g,"/").replace(/(\d)\s*[rR]\s*(\d)/,"$1 R$2").replace(/\bzr\b/gi,"ZR").toUpperCase();
+  f.querySelector("#rfWeg").onclick=()=>{if(window.mxZu)window.mxZu()};
+  f.querySelector("#rfOk").onclick=()=>{const neu=Object.assign({},w),v=id=>{const i=f.querySelector("#"+id);return i?i.value.trim():""};let text="Reifen gespeichert";
+    if(art==="art"){neu.art=W("art");text="Drauf: "+(ART[neu.art]||"nichts")+" gespeichert"}
+    else if(art==="groesse"){const g=W("rundum")==="0";neu.rundum=!g;neu.vorne=gr(v("rfVorne"));neu.hinten=g?gr(v("rfHinten")):"";neu.hinweis="";text="Reifengröße gespeichert"}
+    else if(art==="marke"){neu.marke=v("rfMarke");neu.modell=v("rfModell");text="Reifenmarke gespeichert"}
+    else if(art==="profil"){for(const r of RAD){const p=v("rfP"+r),d=v("rfD"+r).replace(/\s/g,"");
+        if(p){const x=zahlW(p);if(x===null||x<0||x>20||!/^\d{1,2}([.,]\d{1,2})?$/.test(p))return fehler(POS[r].charAt(0).toUpperCase()+POS[r].slice(1)+": Profil in mm, zum Beispiel 6,5.");neu["p"+r]=x}else neu["p"+r]="";
+        if(d){const dd=dotDatum(d);if(!dd||dd>new Date(Date.now()+14*864e5))return fehler(POS[r].charAt(0).toUpperCase()+POS[r].slice(1)+": DOT sind 4 Ziffern, Woche und Jahr, zum Beispiel 2423.");neu["d"+r]=d}else neu["d"+r]=""}
+      text="Profil und DOT gespeichert"}
+    else if(art==="lager"){neu.lager=W("lager");neu.lagerArt=neu.lager==="ja"?W("lagerArt"):"";text="Zweiter Satz gespeichert"}
+    else if(art==="bestellen"){const s=v("rfStueck");if(s&&!/^\d{1,2}$/.test(s))return fehler("Bitte eine Zahl eintragen, zum Beispiel 4.");neu.bestellen=s===""?"":+s;text=s&&+s>0?s+" Reifen neu bestellen gespeichert":"Neu bestellen gespeichert"}
+    else if(art==="geprueft"){neu.geprueftAm=v("rfAm");neu.geprueftVon=v("rfVon");text="Geprüft gespeichert"}
+    fehler("");if(window.mxZu)window.mxZu();if(JSON.stringify(neu)===JSON.stringify(w)&&stamm()[n]&&(stamm()[n].reifenSatz||{}).vorbelegt)return;speichern(n,neu,text)};
+  if(window.mxAuf)window.mxAuf("rfF");
+  if(rad){const i=f.querySelector("#rfP"+rad);if(i)try{i.focus({preventScroll:true})}catch(e){}}}
+window.rfBlatt=blatt;
+
+/* ---------- Ablauf: nach jedem Zeichnen der Seite, nur in der neuen Ansicht ---------- */
+function weg(){const f=document.getElementById("rfF");if(f&&f.classList.contains("auf")&&window.mxZu)window.mxZu();document.querySelectorAll("[data-rf]").forEach(x=>x.remove())}
+function lauf(){if(!an()){if(document.querySelector("[data-rf]"))weg();return}karte();uebersicht()}
+const sicher=()=>{try{lauf()}catch(e){window.rfKaputt=String(e&&e.message||e);try{weg()}catch(x){}if(window.console)console.warn("Reifen abgeschaltet:",e)}};
+sicher();new MutationObserver(sicher).observe(box,{childList:true});new MutationObserver(sicher).observe(H,{attributes:true,attributeFilter:["class"]});window.rfLaeuft=1;
 })();</script></body></html>
