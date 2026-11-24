@@ -701,7 +701,7 @@ let AUTO_OFFEN="",AUTO_WUNSCH=new URLSearchParams(location.search).get("auto")||
 const WIEDER=!!window.mxWieder;   // eine Prüfung für alle Seiten (stil/fenster.py, KOPF im <head>, 11.11.2026): nur Neuladen und Zurück/Vor stellen die Ansicht wieder her, ein neuer Aufruf beginnt mit der Liste
 try{if(WIEDER&&history.state&&history.state.mxAuto)AUTO_OFFEN=history.state.mxAuto}catch(e){}   // neu geladen in der Detailansicht: sie bleibt offen, der Zurück-Schritt passt (Prüfung 10.11.2026)
 const kurz=s=>s?de(s).slice(0,6):"";
-const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["istfrei","Frei"],["gebucht","Gebucht"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});
+const AUTO_LK=mxListenkopf("autoLK","autos",{suche:"Name oder Kennzeichen",felder:[{k:"stand",t:"Stand",alle:"Alle",werte:()=>[["istfrei","Frei"],["gebucht","Reserviert"],["unterwegs","Unterwegs"],["ueber","Überfällig"],["gesperrt","Gesperrt"],["achtung","Achtung"]]}],neu:()=>zeichneAutos()});   // Filter heißt „Reserviert“, der Wert „gebucht“ bleibt intern (Fehlerliste F48, 24.11.2026)
 if(AUTO_LK.w.stand==="frei")AUTO_LK.w.stand="istfrei";   // Nachtprüfung 09.11.2026: „frei“ hält der Listenkopf für einen eigenen Zeitraum („bis NaN.NaN.“), alter gemerkter Filter zieht mit
 const NEU_PUNKT=(()=>{try{return JSON.parse(localStorage.getItem("mietixFeld:zustandPunkt")||"{}")||{}}catch(e){return{}}})();   // Getipptes bleibt, wenn der Abgleich die Seite neu zeichnet (04.11.2026), auch beim Neuladen (05.11.2026)
 const neuPunktMerken=()=>{try{if(Object.keys(NEU_PUNKT).some(k=>NEU_PUNKT[k]))localStorage.setItem("mietixFeld:zustandPunkt",JSON.stringify(NEU_PUNKT));else localStorage.removeItem("mietixFeld:zustandPunkt")}catch(e){}};
@@ -736,8 +736,8 @@ function autoInfo(n,stamm,vorg,zust,h){const a=stamm[n]||{};vorg=(vorg||[]).filt
   return{a,kmStand,jetzt,naechste,punkte,erl,achtung,sperre,ohneUeb}}
 const uebWann=v=>(v.vonD===isoHeute()?"Übergabe heute":"Übergabe fehlt, ab "+kurz(v.vonD))+(v.vonU?" "+v.vonU:"");
 function autoZeile(n,i){const kz=i.a.kz||"";let schild,text;
-  if(i.jetzt&&i.jetzt.ohneVertrag){schild='<span class="schild sr">gebucht</span>';text=i.jetzt.name+" bis "+kurz(i.jetzt.bisD)+", Mietvertrag fehlt"}
-  else if(i.jetzt&&i.ohneUeb){schild='<span class="schild sr">gebucht</span>';text=i.jetzt.name+", "+uebWann(i.jetzt)}
+  if(i.jetzt&&i.jetzt.ohneVertrag){schild='<span class="schild sr">reserviert</span>';text=i.jetzt.name+" bis "+kurz(i.jetzt.bisD)+", Mietvertrag fehlt"}   // Schild „reserviert“ statt „gebucht“ (Fehlerliste F48, 24.11.2026)
+  else if(i.jetzt&&i.ohneUeb){schild='<span class="schild sr">reserviert</span>';text=i.jetzt.name+", "+uebWann(i.jetzt)}   // (Fehlerliste F48, 24.11.2026)
   else if(i.jetzt){const ueber=i.jetzt.bisD<isoHeute();schild='<span class="schild sr">'+(ueber?"überfällig":"unterwegs")+'</span>';text=i.jetzt.name+(ueber?" seit ":" bis ")+kurz(i.jetzt.bisD)}
   else if(i.sperre){schild='<span class="schild sr">gesperrt</span>';text=(i.sperre.grund?i.sperre.grund+", ":"")+kurz(i.sperre.von)+" bis "+kurz(i.sperre.bis);if(i.achtung.length)text+=", "+i.achtung[0]}
   else{schild='<span class="schild sg">frei</span>'+(i.achtung.length?'<span class="schild sy">Achtung</span>':"");const plan=i.naechste?"nächste Miete "+kurz(i.naechste.vonD):"keine Miete geplant";text=i.achtung.length?i.achtung.join(", ")+(i.naechste?", "+plan:""):plan}   // Achtung (TÜV, Kratzer) ändert nichts daran, dass das Auto frei ist (09.11.2026)
@@ -771,7 +771,7 @@ function zeichneAutos(){
   $("autoLK").classList.add("versteckt");
   $("autos").innerHTML='<button type="button" class="zurueckA" id="autoZurueck"><b>‹</b>Autos</button>'+[AUTO_OFFEN].map(n=>{const i=autoInfo(n,stamm,vorg,zust,h),a=i.a,kmStand=i.kmStand,jetzt=i.jetzt,naechste=i.naechste,punkte=i.punkte,erl=i.erl;
     // Gerade und Nächste Miete öffnen die Mappe des Mietvertrags, wenn es einen mit Nummer gibt
-    const gerade=jetzt?'<span class="rot">'+String(jetzt.ohneVertrag?"gebucht: "+jetzt.name+" bis "+de(jetzt.bisD)+", Mietvertrag fehlt noch":i.ohneUeb?"gebucht: "+jetzt.name+" bis "+de(jetzt.bisD)+", "+uebWann(jetzt):jetzt.bisD<h?"überfällig: "+jetzt.name+" sollte am "+de(jetzt.bisD)+" zurück sein":"unterwegs: "+jetzt.name+" bis "+de(jetzt.bisD)).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span>':i.sperre?'<span class="rot">'+esc("selbst gesperrt"+(i.sperre.grund?": "+i.sperre.grund:"")+", "+de(i.sperre.von)+" bis "+de(i.sperre.bis))+'</span>':'<span class="gruen">frei</span>';
+    const gerade=jetzt?'<span class="rot">'+String(jetzt.ohneVertrag?"reserviert: "+jetzt.name+" bis "+de(jetzt.bisD)+", Mietvertrag fehlt noch":i.ohneUeb?"reserviert: "+jetzt.name+" bis "+de(jetzt.bisD)+", "+uebWann(jetzt):jetzt.bisD<h?"überfällig: "+jetzt.name+" sollte am "+de(jetzt.bisD)+" zurück sein":"unterwegs: "+jetzt.name+" bis "+de(jetzt.bisD)).replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</span>':i.sperre?'<span class="rot">'+esc("selbst gesperrt"+(i.sperre.grund?": "+i.sperre.grund:"")+", "+de(i.sperre.von)+" bis "+de(i.sperre.bis))+'</span>':'<span class="gruen">frei</span>';   // „reserviert:“ statt „gebucht:“ (Fehlerliste F48, 24.11.2026)
     const naechT=naechste?String(naechste.name).replace(/&/g,"&amp;").replace(/</g,"&lt;")+", "+de(naechste.vonD):'<span class="grau">keine</span>';
     const verl=(nr,titel,inhalt,bu)=>bu&&!nr?'<a class="zeile mappe" href="'+BUCHUNG(bu)+'"><span>'+titel+'</span><span class="wert"><b>'+inhalt+'</b><span class="pf">›</span></span></a>':nr?'<a class="zeile mappe" href="'+MAPPE(nr)+'"><span>'+titel+'</span><span class="wert"><b>'+inhalt+'</b><span class="pf">›</span></span></a>':'<div class="zeile"><span>'+titel+'</span><b>'+inhalt+'</b></div>';
     return'<div class="karte auto" data-auto="'+esc(n)+'"><h3>'+esc(n)+'</h3><div class="kz">'+esc((a.kz||"")+(a.fin?"  |  FIN "+a.fin:""))+'</div>'+
@@ -1062,10 +1062,10 @@ const felderVon=x=>{const f={};if(istObj(x))Object.keys(x).forEach(n=>{f[n]=fp(x
   else if(LISTEN[n]&&Array.isArray(x[n])){const P=LISTEN[n]+"#";f[P+"n"]=String(x[n].length);
     x[n].forEach((e,i)=>{const s=P+elSchl(e,i);f[s]=fp(e);if(istObj(e))Object.keys(e).forEach(t=>f[s+"."+t]=fp(e[t]))})}});return f};
 /* Feldnamen und Werte für rote Hinweise, „Sicher?“ und das offene Fenster (11.11.2026) */
-const FNAMEN={gesamt:"Mietpreis",preis1:"Mietpreis",preis2:"Zusatzfahrer-Preis",bisD:"Rückgabe",bisU:"Rückgabeuhr",vonD:"Abholung",vonU:"Abholuhr",telefon:"Telefon",nummer:"Telefon",name:"Name",
+const FNAMEN={gesamt:"Mietpreis",preis1:"Mietpreis",preis2:"Zusatzfahrer-Preis",bisD:"Rückgabe",bisU:"Rückgabeuhr",vonD:"Übergabe",vonU:"Übergabeuhr",telefon:"Telefon",nummer:"Telefon",name:"Name",
   anschrift:"Anschrift",email:"E-Mail",geb:"Geburtsdatum",gebort:"Geburtsort",auto:"Auto",kz:"Kennzeichen",km:"km",freikm:"Inklusive km",mvRab:"Rabatt",zf:"Zusatzfahrer",paketKm:"Kilometerpaket",
   kautionArt:"Kautionsart",sb:"Selbstbeteiligung",mehrkm:"Mehr-km-Preis",ort:"Ort",status:"Status",notiz:"Notiz",ueb:"Übergabe",rueck:"Rückgabe-Protokoll",unterschrift:"Unterschrift",
-  kautionRueck:"Kaution zurück",endabrechnung:"Endabrechnung",von:"Abholung",bis:"Rückgabe",angebot:"Angebot",anzahlung:"Anzahlung",kostenVorab:"Weitere Kosten",verlaengerungen:"Verlängerung",teilzahlungen:"Teilzahlung",zahlung:"Zahlung"};
+  kautionRueck:"Kaution zurück",endabrechnung:"Endabrechnung",von:"Übergabe",bis:"Rückgabe",angebot:"Angebot",anzahlung:"Anzahlung",kostenVorab:"Weitere Kosten",verlaengerungen:"Verlängerung",teilzahlungen:"Teilzahlung",zahlung:"Zahlung"};
 const ZTEIL={anz:"Anzahlung",rest:"Rest",kaut:"Kaution"};
 // Schadenfall (F11): Namen wie auf der Seite Schäden
 const FALLFELD={status:"Stand",forderung:"Schaden",einbehalten:"Kaution behalten",frist:"Frist",fristDatum:"Frist",schritt:"Nächster Schritt",worum:"Worum es geht",gruppe:"Gruppe",
@@ -1075,7 +1075,7 @@ function feldName(p){p=(p||[]).map(String);const a=p[0],b=p[1],c=p[2];
   if(a==="faelle")return c==="belege"&&p[3]?"Beleg "+(BELEGNAME[p[3]]||p[3]):c?FALLFELD[c]||c:"Schadenfall";   // F11
   if(a==="zahlung"&&ZTEIL[b])return ZTEIL[b]+(c==="am"?(b==="kaut"?" erhalten am":" bezahlt am"):c==="art"?", Zahlart":"");
   if(a==="anzahlung")return "Anzahlung"+(b==="am"?" bezahlt am":b==="art"?", Zahlart":"");
-  if(a==="angebot"&&b)return({preis:"Mietpreis",freikm:"Inklusive km",rabatt:"Rabatt",von:"Abholung",bis:"Rückgabe",auto:"Auto"})[b]||"Angebot";
+  if(a==="angebot"&&b)return({preis:"Mietpreis",freikm:"Inklusive km",rabatt:"Rabatt",von:"Übergabe",bis:"Rückgabe",auto:"Auto"})[b]||"Angebot";
   if(a==="kautionRueck"&&b)return({einbehalt:"Einbehalt",betrag:"Kaution zurück",am:"Kaution zurück am",grund:"Grund für den Einbehalt"})[b]||"Kaution zurück";
   if(a==="verlaengerungen"||a==="teilzahlungen"){const N=a==="verlaengerungen"?"Verlängerung":"Teilzahlung",n=b!=null&&/^\d+$/.test(b)?" "+(+b+1):"";
     return N+n+(c?({aufpreis:", Aufpreis",betrag:", Betrag",bisNeu:", verlängert bis",bezahltAm:", bezahlt am",am:", am",art:", Zahlart",bezahlt:", bezahlt"})[c]||"":"")}
@@ -1995,7 +1995,7 @@ const sicher=f=>function(){if(aus)return;try{return f.apply(this,arguments)}catc
 // Verschwindet nxNeu (Rückfall der Leiste), geht auch diese Schicht
 {const o=new MutationObserver(sicher(()=>{if(!H.classList.contains("nxNeu"))aufraeumen()}));o.observe(H,{attributes:true,attributeFilter:["class"]});beob.push(o)}
 // Zustand aus dem Text der Seite (Schildchen der Liste, Zeile „Gerade“ der Karte), nur gelesen
-const ZUSTAND=t=>{t=String(t||"").trim().toLowerCase();return /^überfällig/.test(t)?"auX":/^unterwegs/.test(t)?"auU":/^gebucht/.test(t)?"auR":/^(selbst )?gesperrt/.test(t)?"auS":/^frei/.test(t)?"auF":""};
+const ZUSTAND=t=>{t=String(t||"").trim().toLowerCase();return /^überfällig/.test(t)?"auX":/^unterwegs/.test(t)?"auU":/^(reserviert|gebucht)/.test(t)?"auR":/^(selbst )?gesperrt/.test(t)?"auS":/^frei/.test(t)?"auF":""};   // „reserviert“ neu, „gebucht“ für ältere Stände (Fehlerliste F48, 24.11.2026)
 // Bezeichnung über der Karte (Baustein 3), eine Zahl steht als Text dahinter; die Karte selbst hat keinen Kopf
 const gruppe=(karte,art,t,n)=>{if(t)karte.insertAdjacentHTML("beforeend",'<div class="auBez auBez'+art+'" data-nxzusatz="au">'+t+(n===undefined?"":'<span class="auZahl">'+(n||"")+'</span>')+'</div>');
   const g=document.createElement("div");g.className="auGr auGr"+art;karte.appendChild(g);return g};
